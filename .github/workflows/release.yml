@@ -39,20 +39,14 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Setup Xmake
+      - name: Setup Xmake & Cache
         uses: xmake-io/github-action-setup-xmake@v1
         with:
-          xmake-version: latest
-
-      - name: Cache Xmake packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.xmake
-            build/.gens
-          key: ${{ runner.os }}-xmake-release-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}-${{ hashFiles('xmake.lua') }}
-          restore-keys: |
-            ${{ runner.os }}-xmake-release-${{ inputs.mode || 'release' }}-
+          xmake-version: 3.0.9
+          package-cache: true
+          package-cache-key: ${{ runner.os }}-xmake-release-pkg-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}
+          build-cache: true
+          build-cache-key: ${{ runner.os }}-xmake-release-build-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}
 
       - name: Configure project
         run: >
