@@ -6,7 +6,9 @@ export module core:ui;
 import :patch_registry;
 import :settings;
 import :i18n;
+import :hotkey;
 import imgui_hook;
+import fa;
 import std;
 
 struct State {
@@ -14,6 +16,7 @@ struct State {
   std::size_t selected_index = 0;
   float ui_scale = 1.0f;
   float pending_ui_scale = 1.0f;
+  core::hotkey::Hotkey menu_hotkey{VK_OEM_3}; // Default to '~'
   ImGuiTextFilter filter;
 };
 
@@ -158,6 +161,8 @@ void LoadDefaultFont() {
 }
 
 void Initialize() {
+  auto &io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
   LoadDefaultFont();
 
   auto &settings = GetSettings();
@@ -170,12 +175,23 @@ void Initialize() {
   state.pending_ui_scale = state.ui_scale;
   ApplyStyle(state.ui_scale);
 
+  loader.Bind("UI.menu_hotkey", state.menu_hotkey.value, static_cast<std::uint32_t>(VK_OEM_3));
+
   ImGuiHook::OnWndProc += [](HWND, UINT msg, WPARAM wp, LPARAM) -> bool {
-    if (msg == WM_KEYDOWN && wp == VK_OEM_3) {
+    if (core::hotkey::IsCapturing()) {
+        if (core::hotkey::FeedCapture(msg, wp)) {
+            return true;
+        }
+    }
+
+    if (state.menu_hotkey.IsPressed(msg, wp)) {
       state.window_open = !state.window_open;
     }
     return false;
   };
+  static fa::ConDescReg cmd_open_menu{"famod", "Opens the FAmod UI", +[](fa::vector<fa::string>*) {
+    state.window_open = !state.window_open;
+  }};
 }
 
 void Render() {
@@ -191,9 +207,9 @@ void Render() {
   }
 
   const float scale = state.ui_scale;
-  ImGui::SetNextWindowSize({650.0f * scale, 390.0f * scale},
+  ImGui::SetNextWindowSize({680.0f * scale, 400.0f * scale},
                            ImGuiCond_FirstUseEver);
-  ImGui::SetNextWindowSizeConstraints({520.0f * scale, 270.0f * scale},
+  ImGui::SetNextWindowSizeConstraints({680.0f * scale, 400.0f * scale},
                                       {9999.0f, 9999.0f});
 
   if (!ImGui::Begin("FAMod - Patch Manager", &state.window_open)) {
@@ -321,43 +337,6 @@ void Render() {
   }
 
   ImGui::SameLine();
-  if (ImGui::SmallButton("100%")) {
-    state.ui_scale = 1.0f;
-    state.pending_ui_scale = 1.0f;
-    scale_changed = true;
-  }
-  ImGui::SetItemTooltip("%s",
-                        tr("Reset to default scale (1080p / 1.0x)",
-                           {{Language::Russian,
-                             "Сбросить на масштаб по умолчанию (1080p / 1.0x)"},
-                            {Language::Chinese, "恢复默认缩放 (1080p / 1.0x)"}})
-                            .c_str());
-
-  ImGui::SameLine();
-  if (ImGui::SmallButton("150%")) {
-    state.ui_scale = 1.5f;
-    state.pending_ui_scale = 1.5f;
-    scale_changed = true;
-  }
-  ImGui::SetItemTooltip(
-      "%s", tr("Scale for 1440p / QHD (1.5x)",
-               {{Language::Russian, "Масштаб для 1440p / QHD (1.5x)"},
-                {Language::Chinese, "1440p / QHD 缩放 (1.5x)"}})
-                .c_str());
-
-  ImGui::SameLine();
-  if (ImGui::SmallButton("200%")) {
-    state.ui_scale = 2.0f;
-    state.pending_ui_scale = 2.0f;
-    scale_changed = true;
-  }
-  ImGui::SetItemTooltip(
-      "%s", tr("Scale for 2160p / 4K (2.0x)",
-               {{Language::Russian, "Масштаб для 2160p / 4K (2.0x)"},
-                {Language::Chinese, "2160p / 4K 缩放 (2.0x)"}})
-                .c_str());
-
-  ImGui::SameLine();
   ImGui::Spacing();
   ImGui::SameLine();
   ImGui::TextDisabled("%s", tr("Language:", {{Language::Russian, "Язык:"},
@@ -388,6 +367,24 @@ void Render() {
     }
     ImGui::EndCombo();
   }
+
+  ImGui::SameLine();
+  if (core::hotkey::RenderUi(
+          tr("Menu Hotkey:", {{Language::Russian, "Горячая клавиша меню:"},
+                              {Language::Chinese, "菜单快捷键:"}})
+              .c_str(),
+          state.menu_hotkey)) {
+    auto &settings = GetSettings();
+    settings.Saver().Bind("UI.menu_hotkey", state.menu_hotkey.value);
+    settings.Save(kSettingsPath);
+  }
+
+  ImGui::SameLine();
+  ImGui::TextDisabled("(?)");
+  ImGui::SetItemTooltip("%s", tr("To unbind the hotkey, press Delete or Backspace while rebinding.\nAlternatively, type 'famod' in the game console (~).",
+                                 {{Language::Russian, "Чтобы удалить хоткей, нажмите Delete или Backspace во время переназначения.\nТакже можете ввести 'famod' в консоли игры (~)."},
+                                  {Language::Chinese, "要取消绑定快捷键，请在重新绑定时按 Delete 或 Backspace。\n或者在游戏控制台 (~) 中输入 'famod'。"}})
+                                  .c_str());
 
   if (scale_changed && old_scale > 0.0f) {
     ApplyStyle(state.ui_scale);

@@ -1,18 +1,18 @@
-# FAMod — Forged Alliance Binary Enhancement Suite
+# FAmod — Forged Alliance Binary Enhancement Suite
 
 [![Language](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Build](https://img.shields.io/badge/build-xmake-orange.svg)](https://xmake.io)
 [![Target](https://img.shields.io/badge/target-FAForever-red.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**FAMod** is a lightweight in-game enhancement mod and binary patch suite for **[FAForever (Forged Alliance Forever)](https://faforever.com/)**.
+**FAmod** is a lightweight in-game enhancement mod and binary patch suite for **[FAForever (Forged Alliance Forever)](https://faforever.com/)**.
 
 > [!IMPORTANT]
-> **Compatibility Notice**: FAMod is currently compatible **only with FAForever (FAF)**. It targets the engine modifications and structures present in FAForever's patched binary and will **not** work on vanilla Steam, GOG, or retail CD versions (non-FAF executables are automatically detected and rejected to prevent crashes).
+> **Compatibility Notice**: FAmod is currently compatible **only with FAForever (FAF)**. It targets the engine modifications and structures present in FAForever's patched binary and will **not** work on vanilla Steam, GOG, or retail CD versions (non-FAF executables are automatically detected and rejected to prevent crashes).
 
 **In-Game GUI**: Press **`~` (Tilde)** at any time to configure patches
 
-![FAMod Patch Manager Window](docs/screenshots/main_window.png)
+![FAmod Patch Manager Window](docs/screenshots/main_window.png)
 
 ---
 
@@ -23,20 +23,21 @@
 1. Download the latest **`dsound.dll`** from the [Releases](https://github.com/RutreD/FAmod/releases) page.
 2. Place `dsound.dll` directly into your FAForever binary directory alongside `ForgedAlliance.exe`.
    > **Default FAF Path**: `C:\ProgramData\FAForever\bin`
-   * **Replays**: To make FAMod work when watching replays, also copy `dsound.dll` into the replay binary directory:
+   * **Replays**: To make FAmod work when watching replays, also copy `dsound.dll` into the replay binary directory:
      > **Default Replay Path**: `C:\ProgramData\FAForever\replaydata\bin`
 3. Launch the game via the **FAForever Client** and play as usual!
 
 ### Using the In-Game Menu
 
-* Press **`~` (Tilde / Backquote)** on your keyboard at any time in-game to toggle the configuration menu.
+* Press **`~` (Tilde / Backquote)** on your keyboard at any time in-game to toggle the configuration menu. You can rebind this hotkey in the settings.
+* **Lost your hotkey?** You can always open the game's built-in console and type `famod` to force open the configuration menu.
 * **UI Scaling**: If you play on a high-DPI (2K / 4K) monitor, use the UI scale slider in the top bar to resize the menu comfortably.
 * **Languages**: Full built-in localization in **English**, **Русский (Russian)**, and **简体中文 (Simplified Chinese)**.
 * **Auto-Save**: All changes are automatically persisted to `famod_settings.json` in your game folder.
 
 ### Uninstallation
 
-To remove FAMod, simply delete `dsound.dll` and `famod_settings.json` from your `FAForever\bin` folder (and from `FAForever\replaydata\bin` if installed for replays).
+To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your `FAForever\bin` folder (and from `FAForever\replaydata\bin` if installed for replays).
 
 ---
 
@@ -48,7 +49,7 @@ To remove FAMod, simply delete `dsound.dll` and `famod_settings.json` from your 
   - **Own units only**: Standard vanilla behavior.
   - **Own units and allied static structures**: Shows allied radar towers, sonars, and bases without cluttering the screen with mobile units.
   - **Own and all allied units**: Full vision coverage for all allied units and structures.
-* **Preview** *(Vanilla vs. FAMod Enabled)*:
+* **Preview** *(Vanilla vs. FAmod Enabled)*:
 
   **Allied Buildings**
   ![Allied Buildings](docs/screenshots/allied_rings_structures.png)
@@ -92,14 +93,14 @@ To remove FAMod, simply delete `dsound.dll` and `famod_settings.json` from your 
 ## ❓ Frequently Asked Questions (FAQ)
 
 <details>
-<summary><b>Why should I trust FAMod? / Is this safe? / My antivirus flagged dsound.dll</b></summary>
-FAMod is completely open-source (MIT licensed) and fully transparent. All binary builds are built publicly through <b>GitHub Actions</b> directly from the codebase. You don't have to trust opaque prebuilt binaries: you can inspect every line of code, verify GitHub Actions build logs, or build the DLL yourself locally or in your own GitHub fork.
-Because FAMod uses a standard DirectX proxy DLL technique (named <code>dsound.dll</code>) to load alongside <code>ForgedAlliance.exe</code>, some overly aggressive heuristics may flag it as unknown. The entire project is open source, safe, and can be built from source yourself.
+<summary><b>Why should I trust FAmod? / Is this safe? / My antivirus flagged dsound.dll</b></summary>
+FAmod is completely open-source (MIT licensed) and fully transparent. All binary builds are built publicly through <b>GitHub Actions</b> directly from the codebase. You don't have to trust opaque prebuilt binaries: you can inspect every line of code, verify GitHub Actions build logs, or build the DLL yourself locally or in your own GitHub fork.
+Because FAmod uses a standard DirectX proxy DLL technique (named <code>dsound.dll</code>) to load alongside <code>ForgedAlliance.exe</code>, some overly aggressive heuristics may flag it as unknown. The entire project is open source, safe, and can be built from source yourself.
 </details>
 
 <details>
-<summary><b>Can I use FAMod with the Steam or GOG version of Supreme Commander: Forged Alliance?</b></summary>
-No. FAMod is designed specifically for <b>FAForever (FAF)</b> and relies on the patched engine binaries generated by the FAF ecosystem. Running FAMod with unpatched Steam, GOG, or retail versions is not supported — FAMod will automatically detect the executable format and gracefully abort initialization to prevent game crashes.
+<summary><b>Can I use FAmod with the Steam or GOG version of Supreme Commander: Forged Alliance?</b></summary>
+No. FAmod is designed specifically for <b>FAForever (FAF)</b> and relies on the patched engine binaries generated by the FAF ecosystem. Running FAmod with unpatched Steam, GOG, or retail versions is not supported — FAmod will automatically detect the executable format and gracefully abort initialization to prevent game crashes.
 </details>
 
 <details>
@@ -131,6 +132,12 @@ You can build your own `dsound.dll` in the cloud without installing compilers or
 ---
 
 ## 🛠️ Local Building & Toolchain Setup
+
+### Prerequisites
+
+To build the project locally, you will need to install the following tools:
+1. **[Xmake](https://xmake.io/#/guide/installation)** — The build system used for this project.
+2. A C++23 compatible compiler, such as **[MSVC (Visual Studio)](https://visualstudio.microsoft.com/)**, **[LLVM/Clang](https://github.com/llvm/llvm-project)**, or **[MinGW-w64 i686 (niXman builds)](https://github.com/niXman/mingw-builds-binaries)**.
 
 ### Tested Compilers & Versions
 
