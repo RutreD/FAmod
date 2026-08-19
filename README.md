@@ -29,7 +29,7 @@
 
 ### Using the In-Game Menu
 
-* Press **`~` (Tilde / Backquote)** on your keyboard at any time in-game to toggle the configuration menu.
+* Press **Page Up** on your keyboard at any time in-game to toggle the configuration menu.
 * **UI Scaling**: If you play on a high-DPI (2K / 4K) monitor, use the UI scale slider in the top bar to resize the menu comfortably.
 * **Languages**: Full built-in localization in **English**, **Русский (Russian)**, and **简体中文 (Simplified Chinese)**.
 * **Auto-Save**: All changes are automatically persisted to `famod_settings.json` in your game folder.

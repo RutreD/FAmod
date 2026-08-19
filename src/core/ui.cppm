@@ -171,7 +171,7 @@ void Initialize() {
   ApplyStyle(state.ui_scale);
 
   ImGuiHook::OnWndProc += [](HWND, UINT msg, WPARAM wp, LPARAM) -> bool {
-    if (msg == WM_KEYDOWN && wp == VK_OEM_3) {
+    if (msg == WM_KEYDOWN && wp == VK_PRIOR) {
       state.window_open = !state.window_open;
     }
     return false;

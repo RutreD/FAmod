@@ -115,7 +115,8 @@ DWORD WINAPI MainThread(LPVOID /*param*/) {
   }
 
 #if defined(_DEBUG)
-  std::println("FAMod loaded. Press \"~\" in-game to open the patch manager.");
+  std::println(
+      "FAMod loaded. Press Page Up in-game to open the patch manager.");
 #endif
 
   core::app::Initialize();

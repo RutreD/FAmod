@@ -143,6 +143,9 @@ void Init(IDirect3DDevice9 *pDevice) {
   D3DDEVICE_CREATION_PARAMETERS params{};
   pDevice->GetCreationParameters(&params);
   ImGui::CreateContext();
+  // Forged Alliance owns and draws its in-game cursor. Prevent the Win32
+  // backend from replacing it with a Windows desktop cursor every frame.
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
   ImGui_ImplWin32_Init(params.hFocusWindow);
   ImGui_ImplDX9_Init(pDevice);
   Input::Window = params.hFocusWindow;
