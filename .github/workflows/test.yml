@@ -13,8 +13,16 @@ on:
 
 jobs:
   test-toolchains:
-    name: Test Toolchains (MSVC, Clang, MinGW)
+    name: Test ${{ matrix.toolchain }}
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - msvc
+          - clang
+          # WAIT FOR GCC16
+          # - mingw
 
     steps:
       - name: Checkout repository
@@ -33,25 +41,13 @@ jobs:
           path: |
             ~/.xmake
             build/.gens
-          key: ${{ runner.os }}-xmake-test-${{ hashFiles('xmake.lua') }}
+          key: ${{ runner.os }}-xmake-test-${{ matrix.toolchain }}-${{ hashFiles('xmake.lua') }}
           restore-keys: |
-            ${{ runner.os }}-xmake-test-
+            ${{ runner.os }}-xmake-test-${{ matrix.toolchain }}-
 
-      - name: Test MSVC
-        run: |
-          xmake f -p windows -a x86 -m release --toolchain=msvc -y -v
-          xmake -v
-          xmake clean --all
+      - name: Configure project
+        run: xmake f -p windows -a x86 -m release --toolchain=${{ matrix.toolchain }} --runtimes=MT -y -v
 
-      - name: Test Clang
-        run: |
-          xmake f -p windows -a x86 -m release --toolchain=clang --runtimes=MT -y -v
-          xmake -v
-          xmake clean --all
+      - name: Build
+        run: xmake -v
 
-      # WAIT FOR GCC16
-      # - name: Test MinGW
-      #   run: |
-      #     xmake g --mingw="C:/mingw32"
-      #     xmake f -p windows -a x86 -m release --toolchain=mingw --mingw=C:/mingw32 -y -v
-      #     xmake -v
