@@ -23,6 +23,8 @@
 1. Download the latest **`dsound.dll`** from the [Releases](https://github.com/RutreD/FAmod/releases) page.
 2. Place `dsound.dll` directly into your FAForever binary directory alongside `ForgedAlliance.exe`.
    > **Default FAF Path**: `C:\ProgramData\FAForever\bin`
+   * **Replays**: To make FAMod work when watching replays, also copy `dsound.dll` into the replay binary directory:
+     > **Default Replay Path**: `C:\ProgramData\FAForever\replaydata\bin`
 3. Launch the game via the **FAForever Client** and play as usual!
 
 ### Using the In-Game Menu
@@ -34,7 +36,7 @@
 
 ### Uninstallation
 
-To remove FAMod, simply delete `dsound.dll` and `famod_settings.json` from your `FAForever\bin` folder.
+To remove FAMod, simply delete `dsound.dll` and `famod_settings.json` from your `FAForever\bin` folder (and from `FAForever\replaydata\bin` if installed for replays).
 
 ---
 
@@ -102,7 +104,7 @@ No. FAMod is designed specifically for <b>FAForever (FAF)</b> and relies on the 
 
 <details>
 <summary><b>Where is my FAForever folder located?</b></summary>
-The default path is <code>C:\ProgramData\FAForever\bin</code>. Note that <code>ProgramData</code> is a hidden folder by default in Windows Explorer (press <code>Win + R</code>, type <code>C:\ProgramData\FAForever\bin</code>, and press Enter).
+The default path is <code>C:\ProgramData\FAForever\bin</code> (and <code>C:\ProgramData\FAForever\replaydata\bin</code> for replays). Note that <code>ProgramData</code> is a hidden folder by default in Windows Explorer (press <code>Win + R</code>, type <code>C:\ProgramData\FAForever\bin</code>, and press Enter).
 </details>
 
 ---
