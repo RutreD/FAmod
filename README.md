@@ -10,7 +10,7 @@
 > [!IMPORTANT]
 > **Compatibility Notice**: FAmod is currently compatible **only with FAForever (FAF)**. It targets the engine modifications and structures present in FAForever's patched binary and will **not** work on vanilla Steam, GOG, or retail CD versions (non-FAF executables are automatically detected and rejected to prevent crashes).
 
-**In-Game GUI**: Press **`~` (Tilde)** at any time to configure patches
+**In-Game GUI**: Press **`~` (Tilde)** at any time  (or type `famod` in the game console) to configure patches
 
 ![FAmod Patch Manager Window](docs/screenshots/main_window.png)
 
