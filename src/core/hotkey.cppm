@@ -130,13 +130,13 @@ namespace capture {
   inline bool just_captured = false;
 }
 
-export [[nodiscard]] bool IsCapturing() noexcept {
+[[nodiscard]] bool IsCapturing() noexcept {
   return capture::target_hotkey != nullptr;
 }
 
 // Feeds the WndProc message to the capturing system.
 // Returns true if the message was consumed.
-export bool FeedCapture(UINT msg, WPARAM wp) noexcept {
+bool FeedCapture(UINT msg, WPARAM wp) noexcept {
   if (!IsCapturing()) return false;
 
   if (msg != WM_KEYDOWN && msg != WM_SYSKEYDOWN) {
@@ -181,7 +181,7 @@ export bool FeedCapture(UINT msg, WPARAM wp) noexcept {
   return true;
 }
 
-export bool RenderUi(const char* label, Hotkey& hotkey) {
+bool RenderUi(const char* label, Hotkey& hotkey) {
   bool changed = false;
 
   ImGui::PushID(&hotkey);

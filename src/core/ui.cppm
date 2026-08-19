@@ -189,9 +189,7 @@ void Initialize() {
     }
     return false;
   };
-  static fa::ConDescReg cmd_open_menu{"famod", "Opens the FAmod UI", +[](fa::vector<fa::string>*) {
-    state.window_open = !state.window_open;
-  }};
+  static fa::ConDescReg cmd_open_menu{"famod", "Opens the FAmod UI", &state.window_open};
 }
 
 void Render() {
