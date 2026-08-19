@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Build mode"
+        required: true
+        type: choice
+        options:
+          - release
+          - debug
+        default: release
+      runtimes:
+        description: "C/C++ Runtime (MSVC)"
+        required: true
+        type: choice
+        options:
+          - MT
+          - MD
+          - MTd
+          - MDd
+        default: MT
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+
+      - name: Cache Xmake packages
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.xmake
+            build/.gens
+          key: ${{ runner.os }}-xmake-release-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}-${{ hashFiles('xmake.lua') }}
+          restore-keys: |
+            ${{ runner.os }}-xmake-release-${{ inputs.mode || 'release' }}-
+
+      - name: Configure project
+        run: >
+          xmake f -p windows -a x86
+          -m ${{ inputs.mode || 'release' }}
+          --runtimes=${{ inputs.runtimes || 'MT' }}
+          --toolchain=msvc
+          -y -v
+
+      - name: Build
+        run: xmake -v
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: famod-dsound-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}
+          path: |
+            build/windows/x86/${{ inputs.mode || 'release' }}/dsound.dll
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('nightly-r{0}', github.run_number) }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || format('Nightly Build {0}', github.run_number) }}
+          files: |
+            build/windows/x86/${{ inputs.mode || 'release' }}/dsound.dll
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ github.ref_type != 'tag' }}
