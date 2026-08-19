@@ -103,19 +103,19 @@ DWORD WINAPI MainThread(LPVOID /*param*/) {
         flavor == GameFlavor::Steam
             ? L"Detected Steam version of Supreme Commander: Forged "
               L"Alliance.\n\n"
-              L"FAMod is currently only compatible with FAForever (FAF).\n"
+              L"FAmod is currently only compatible with FAForever (FAF).\n"
               L"Please launch the game through the FAF Client."
             : L"Detected unsupported game binary.\n\n"
-              L"FAMod is currently only compatible with FAForever (FAF).\n"
+              L"FAmod is currently only compatible with FAForever (FAF).\n"
               L"Please launch the game through the FAF Client.";
 
-    MessageBoxW(nullptr, msg, L"FAMod - Unsupported Game Version",
+    MessageBoxW(nullptr, msg, L"FAmod - Unsupported Game Version",
                 MB_OK | MB_ICONWARNING);
     return 0;
   }
 
 #if defined(_DEBUG)
-  std::println("FAMod loaded. Press \"~\" in-game to open the patch manager.");
+  std::println("FAmod loaded. Press \"~\" in-game to open the patch manager.");
 #endif
 
   core::app::Initialize();

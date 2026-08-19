@@ -210,7 +210,7 @@ void Render() {
   ImGui::SetNextWindowSizeConstraints({680.0f * scale, 400.0f * scale},
                                       {9999.0f, 9999.0f});
 
-  if (!ImGui::Begin("FAMod - Patch Manager", &state.window_open)) {
+  if (!ImGui::Begin("FAmod - Patch Manager", &state.window_open)) {
     ImGui::End();
     return;
   }

@@ -174,13 +174,27 @@ The compiled proxy DLL will be output to:
 
 ---
 
-## 🧩 How to Create and Add a New Patch
+## 🧩 Architecture & How to Add a New Patch
 
-Patches are modular C++23 modules located under `src/patches/<patch_name>/`. You can write a patch as a **single file** or split it into **multiple module files** (e.g. separating engine hooks in `patch.cppm` and ImGui UI in `ui.cppm`).
+FAmod uses C++23 named modules (`export module patch.<name>`). All `src/**.cppm` files are automatically discovered and compiled by xmake.
 
-### Single File Patch (`patch.cppm`) for smaller patches (e.g., `src/patches/range_ring_stencil/patch.cppm`).
+Each patch inherits from the `IPatch` base interface (`core:patch`) and provides metadata, binary hooks, declarative settings binding, and an optional ImGui configuration UI.
 
-`src/patches/my_feature/patch.cppm`:
+### Key Concepts & APIs
+
+* **Localization (`tr`)**: Use `tr("English text", {{Language::Russian, "Текст"}, {Language::Chinese, "文本"}})` for all user-visible strings. Returns a `LocalizedString` which implicitly converts to both `std::string_view` and `const char*` / `.c_str()`.
+* **Settings (`SettingsBinder`)**: Declarative two-way serialization via `b.Bind("Key.name", variable, default_value)`. Automatically handles both loading on startup and saving when the user modifies settings in the UI.
+* **In-game Console Variables**: Register console variables with `fa::ConDescReg` so players can inspect or toggle values directly from the in-game console (`~`).
+* **JIT Code Lifetime**: When using `Xbyak::CodeGenerator` or `rcmp` hooks inside `Apply()`, ensure code buffers and variable descriptors remain alive across the process lifetime (e.g. `static Trampoline tramp;` or member variables).
+
+---
+
+### Patch Implementations
+
+#### Option A: Single-File Patch (`src/patches/my_feature/patch.cppm`)
+
+Suitable for small patches with straightforward settings and hooks:
+
 ```cpp
 module;
 #include <imgui.h>
@@ -197,52 +211,173 @@ public:
   inline static bool enabled_{true};
 
   [[nodiscard]] std::string_view Name() const noexcept override {
-    return tr("My Feature", {
-      {Language::Russian, "Моя фича"},
-      {Language::Chinese, "我的功能"}
-    });
+    return tr("My Feature",
+              {{Language::Russian, "Моя фича"},
+               {Language::Chinese, "我的功能"}});
   }
 
   [[nodiscard]] std::string_view Description() const noexcept override {
-    return tr("Description of what this patch does.", {
-      {Language::Russian, "Описание работы патча."},
-      {Language::Chinese, "补丁功能说明。"}
-    });
+    return tr("Brief description of what this patch does.",
+              {{Language::Russian, "Краткое описание работы патча."},
+               {Language::Chinese, "补丁功能说明。"}});
   }
 
   void Apply() override;
 
   void RenderUi() override {
-    ImGui::Checkbox("Enable feature", &enabled_);
+    ImGui::Checkbox(
+        tr("Enable feature",
+           {{Language::Russian, "Включить функцию"},
+            {Language::Chinese, "启用功能"}}),
+        &enabled_);
+    ImGui::SetItemTooltip(
+        "%s",
+        tr("Detailed explanation of this setting.",
+           {{Language::Russian, "Подробное объяснение этой настройки."},
+            {Language::Chinese, "该设置的详细说明。"}})
+            .c_str());
   }
 
-  void SaveSettings(SettingsStore &s) const override {
-    s.Set("MyFeature.enabled", enabled_);
+  void BindSettings(SettingsBinder &b) override {
+    b.Bind("MyFeature.enabled", enabled_, true);
   }
+};
 
-  void LoadSettings(const SettingsStore &s) override {
-    enabled_ = s.Get<bool>("MyFeature.enabled", true);
+// 1. Direct in-place address patch at a fixed game code address
+struct PatchEngineJump : public Xbyak::CodeGenerator {
+  explicit PatchEngineJump(const void *trampoline_address)
+      : Xbyak::CodeGenerator(5, reinterpret_cast<void *>(0x00 GAME-ADDRESS)) {
+    setProtectMode(PROTECT_RWE);
+    jmp(trampoline_address); // or call(trampoline_address)
+    setProtectModeRE();
+  }
+};
+
+// 2. Dynamic trampoline / hook body generated in memory
+struct FeatureTrampoline : public Xbyak::CodeGenerator {
+  FeatureTrampoline() {
+    mov(al, byte[reinterpret_cast<const void *>(&MyFeaturePatch::enabled_)]);
+    test(al, al);
+    // ... custom assembly instructions ...
+    ret();
   }
 };
 
 void MyFeaturePatch::Apply() {
-  // Apply hooks / memory patches here
+  // Keep JIT trampoline buffer alive in memory across the process lifetime
+  static FeatureTrampoline tramp;
+
+  // Apply in-place address patch redirecting execution to trampoline
+  PatchEngineJump patch(tramp.getCode<const void *>());
+
+  // Optional: register in-game console variable (e.g. `ren_MyFeature`)
+  static ConDescReg var("ren_MyFeature", "Toggle my feature (true/false)", &enabled_);
 }
 ```
 
-### Step 2: Register the Patch in `core::app`
-In `src/core/app.cppm`:
-1. Import your patch module:
+---
+
+#### Option B: Patch Without Settings / UI (`src/patches/my_fix/patch.cppm`)
+
+For patches that only apply fixes or optimizations without user-configurable options, `RenderUi()` and `BindSettings()` can be omitted entirely (the base class provides defaults):
+
+```cpp
+module;
+#include <xbyak/xbyak.h>
+
+export module patch.my_fix;
+import core;
+
+export class MyFixPatch : public IPatch {
+public:
+  [[nodiscard]] std::string_view Name() const noexcept override {
+    return tr("My Engine Fix",
+              {{Language::Russian, "Исправление движка"},
+               {Language::Chinese, "引擎修复"}});
+  }
+
+  [[nodiscard]] std::string_view Description() const noexcept override {
+    return tr("Fixes an internal engine issue.",
+              {{Language::Russian, "Исправляет ошибку в движке игры."},
+               {Language::Chinese, "修复游戏引擎内部问题。"}});
+  }
+
+  void Apply() override {
+    // Apply hooks / memory modifications
+  }
+};
+```
+
+---
+
+#### Option C: Multi-File Patch (`patch.cppm` + `ui.cppm`)
+
+For complex patches with extensive ImGui menus, separate the patch logic and UI into two files in `src/patches/<patch_name>/`:
+
+1. `src/patches/my_feature/patch.cppm`:
+   ```cpp
+   module;
+   #include <xbyak/xbyak.h>
+
+   export module patch.my_feature;
+   import fa;
+   import core;
+
+   using namespace fa;
+
+   export class MyFeaturePatch : public IPatch {
+   public:
+     inline static bool enabled_{true};
+
+     [[nodiscard]] std::string_view Name() const noexcept override {
+       return tr("My Feature", {{Language::Russian, "Моя фича"}, {Language::Chinese, "我的功能"}});
+     }
+     [[nodiscard]] std::string_view Description() const noexcept override {
+       return tr("Description...", {{Language::Russian, "Описание..."}, {Language::Chinese, "描述..."}});
+     }
+
+     void Apply() override;
+     void RenderUi() override; // Implemented in ui.cppm
+
+     void BindSettings(SettingsBinder &b) override {
+       b.Bind("MyFeature.enabled", enabled_, true);
+     }
+   };
+
+   void MyFeaturePatch::Apply() {
+     // Apply hooks
+   }
+   ```
+
+2. `src/patches/my_feature/ui.cppm`:
+   ```cpp
+   module;
+   #include <imgui.h>
+
+   module patch.my_feature;
+   import core;
+
+   void MyFeaturePatch::RenderUi() {
+     ImGui::Checkbox(tr("Enable feature", {{Language::Russian, "Включить"}, {Language::Chinese, "启用"}}), &enabled_);
+   }
+   ```
+
+---
+
+### Registering the Patch in `core.app`
+
+In [`src/core/app.cppm`](src/core/app.cppm):
+
+1. **Import** your patch module at the top of the file:
    ```cpp
    import patch.my_feature;
    ```
-2. Register the patch class inside `Initialize()`:
+2. **Register** the patch class inside `Initialize()`:
    ```cpp
    registry.RegisterPatch<MyFeaturePatch>();
    ```
 
-### Step 3: Build and Test
-Run `xmake`. All `src/**.cppm` files are compiled automatically by xmake! The patch will now appear in the in-game GUI with persistent settings and localization.
+Run `xmake` to build. The patch will automatically appear in the in-game GUI with localization, hotkey integration, and persistent JSON configuration.
 
 ---
 
