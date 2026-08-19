@@ -20,7 +20,8 @@ jobs:
       matrix:
         toolchain:
           - msvc
-          - clang
+          # WAIT FOR XMAKE v3.1.1
+          # - clang
           # WAIT FOR GCC16
           # - mingw
 
@@ -33,7 +34,7 @@ jobs:
       - name: Setup Xmake & Cache
         uses: xmake-io/github-action-setup-xmake@v1
         with:
-          xmake-version: 3.0.9
+          xmake-version: latest
           package-cache: true
           package-cache-key: ${{ runner.os }}-xmake-pkg-${{ matrix.toolchain }}
           build-cache: true
