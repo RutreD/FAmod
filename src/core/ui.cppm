@@ -175,13 +175,14 @@ void Initialize() {
   state.pending_ui_scale = state.ui_scale;
   ApplyStyle(state.ui_scale);
 
-  loader.Bind("UI.menu_hotkey", state.menu_hotkey.value, static_cast<std::uint32_t>(VK_OEM_3));
+  loader.Bind("UI.menu_hotkey", state.menu_hotkey.value,
+              static_cast<std::uint32_t>(VK_OEM_3));
 
   ImGuiHook::OnWndProc += [](HWND, UINT msg, WPARAM wp, LPARAM) -> bool {
     if (core::hotkey::IsCapturing()) {
-        if (core::hotkey::FeedCapture(msg, wp)) {
-            return true;
-        }
+      if (core::hotkey::FeedCapture(msg, wp)) {
+        return true;
+      }
     }
 
     if (state.menu_hotkey.IsPressed(msg, wp)) {
@@ -189,7 +190,8 @@ void Initialize() {
     }
     return false;
   };
-  static fa::ConDescReg cmd_open_menu{"famod", "Opens the FAmod UI", &state.window_open};
+  static fa::ConDescReg cmd_open_menu{"famod", "Opens the FAmod UI",
+                                      &state.window_open};
 }
 
 void Render() {
@@ -271,7 +273,7 @@ void Render() {
 
   if (!any_visible) {
     ImGui::PushStyleColor(ImGuiCol_Text,
-                           ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+                          ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
     ImGui::TextWrapped("%s", tr("No matching patches",
                                 {{Language::Russian, "Патчи не найдены"},
                                  {Language::Chinese, "未找到匹配的补丁"}})
@@ -379,10 +381,17 @@ void Render() {
 
   ImGui::SameLine();
   ImGui::TextDisabled("(?)");
-  ImGui::SetItemTooltip("%s", tr("To unbind the hotkey, press Delete or Backspace while rebinding.\nAlternatively, type 'famod' in the game console (~).",
-                                 {{Language::Russian, "Чтобы удалить хоткей, нажмите Delete или Backspace во время переназначения.\nТакже можете ввести 'famod' в консоли игры (~)."},
-                                  {Language::Chinese, "要取消绑定快捷键，请在重新绑定时按 Delete 或 Backspace。\n或者在游戏控制台 (~) 中输入 'famod'。"}})
-                                  .c_str());
+  ImGui::SetItemTooltip(
+      "%s",
+      tr("To unbind the hotkey, press Delete or Backspace while "
+         "rebinding.\nAlternatively, type 'famod' in the game console (~).",
+         {{Language::Russian,
+           "Чтобы удалить хоткей, нажмите Delete или Backspace во время "
+           "переназначения.\nТакже можете ввести 'famod' в консоли игры (~)."},
+          {Language::Chinese,
+           "要取消绑定快捷键，请在重新绑定时按 Delete 或 "
+           "Backspace。\n或者在游戏控制台 (~) 中输入 'famod'。"}})
+          .c_str());
 
   if (scale_changed && old_scale > 0.0f) {
     ApplyStyle(state.ui_scale);

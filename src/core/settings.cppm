@@ -8,8 +8,7 @@ export class SettingsBinder {
 public:
   enum class Mode { Load, Save };
 
-  SettingsBinder(Mode mode, nlohmann::json &data)
-      : mode_(mode), data_(data) {}
+  SettingsBinder(Mode mode, nlohmann::json &data) : mode_(mode), data_(data) {}
 
   template <typename T>
   void Bind(std::string_view key, T &field, const T &default_value = T{}) {

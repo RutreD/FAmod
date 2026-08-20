@@ -50,11 +50,13 @@ struct MeshInstance;
 struct PathTables;
 struct PathQueue;
 struct RBlueprint;
+struct RUnitBlueprint;
 struct RScmResource;
 struct Sim;
 struct SParticleBuffer;
 struct STIMap;
 struct Unit;
+struct UserEntity;
 struct UserUnit;
 struct UserUnitManager;
 struct WeakObject;
@@ -223,6 +225,99 @@ enum ERuleBPUnitCommandCaps : __int32
 	RULEUCC_Script = 0x800000,
 	RULEUCC_Invalid = 0x1000000,
 };
+
+enum EUnitCommandType : __int32
+{
+	UNITCOMMAND_None = -1,
+	UNITCOMMAND_Stop = 1,
+	UNITCOMMAND_Move = 2,
+	UNITCOMMAND_Attack = 0x0A,
+	UNITCOMMAND_Guard = 0x0F,
+	UNITCOMMAND_Patrol = 0x10,
+	UNITCOMMAND_Repair = 0x14,
+	UNITCOMMAND_Capture = 0x15,
+	UNITCOMMAND_TransportUnloadUnits = 0x16,
+	UNITCOMMAND_TransportLoadUnits = 0x17,
+	UNITCOMMAND_Nuke = 0x18,
+	UNITCOMMAND_Tactical = 0x19,
+	UNITCOMMAND_Teleport = 0x1A,
+	UNITCOMMAND_Ferry = 0x1B,
+	UNITCOMMAND_BuildSiloTactical = 0x1C,
+	UNITCOMMAND_BuildSiloNuke = 0x1D,
+	UNITCOMMAND_Sacrifice = 0x1E,
+	UNITCOMMAND_Pause = 0x1F,
+	UNITCOMMAND_OverCharge = 0x20,
+	UNITCOMMAND_Dive = 0x21,
+	UNITCOMMAND_Reclaim = 0x22,
+	UNITCOMMAND_SpecialAction = 0x23,
+};
+
+struct SSTITarget
+{
+	EAiTargetType mType;
+	EntId mEnt;
+	Vector3f mPos;
+};
+VALIDATE_SIZE(SSTITarget, 20);
+
+struct UICursorInfo
+{
+	int mType;
+	Vector3f mPos;
+	EntId mEnt;
+	unk_t unk[4];
+};
+VALIDATE_SIZE(UICursorInfo, 36);
+
+struct SCommandModeData
+{
+	int mMode;
+	ERuleBPUnitCommandCaps mCommandCaps;
+	RUnitBlueprint *mBlueprint;
+	UICursorInfo mMouseDragStart;
+	UICursorInfo mMouseDragEnd;
+	int mModifiers;
+	int mIsDragged;
+	int dword5C;
+};
+VALIDATE_SIZE(SCommandModeData, 96);
+
+template<class T>
+struct WeakSet
+{
+	void *mAlloc;
+	void *mHead;
+	uint32_t mSize;
+
+	[[nodiscard]] size_t Size() const noexcept { return mSize; }
+	[[nodiscard]] bool Empty() const noexcept { return mSize == 0; }
+};
+VALIDATE_SIZE(WeakSet<UserEntity>, 12);
+
+struct SSTICommandIssueData
+{
+	int mNextCmdId;
+	int unk1;
+	int mIndex;
+	EUnitCommandType mCommandType;
+	SSTITarget mTarget;
+	SSTITarget unk2;
+	Vector3f mMaybeOriArgs;
+	Quaternionf mOri;
+	int gap;
+	uint8_t mCells[24];
+	int unk3;
+	int unk4;
+	uint8_t mLObj[20];
+	void *mLuaState;
+	CUnitCommand *mUnitCommand;
+	CUnitCommandQueue *mQueue;
+};
+VALIDATE_SIZE(SSTICommandIssueData, 152);
+VALIDATE_OFFSET(SSTICommandIssueData, mCommandType, 0x0C);
+VALIDATE_OFFSET(SSTICommandIssueData, mTarget, 0x10);
+
+
 
 enum ERuleBPUnitMovementType : __int32
 {

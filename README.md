@@ -90,6 +90,13 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ---
 
+### 6. 🏭 Factory Assist Orders
+* **What it does**: Allows factories to issue assist orders for produced units (including target assistance or ground rally points). When assisting another factory, standard build queue sharing is preserved.
+* **Preview**:
+  ![Factory Assist Orders](docs/screenshots/factory_assist.png)
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 <details>

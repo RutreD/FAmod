@@ -14,6 +14,7 @@ import patch.range_ring_stencil;
 import patch.minimap_ranges;
 import patch.network_stats;
 import patch.health_bars;
+import patch.share_factory_assist;
 
 export namespace core::app {
 
@@ -28,6 +29,7 @@ void Initialize() {
   registry.RegisterPatch<HealthBarsPatch>();
   registry.RegisterPatch<NetworkStatsPatch>();
   registry.RegisterPatch<MinimapRangesPatch>();
+  registry.RegisterPatch<ShareFactoryAssistPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();
