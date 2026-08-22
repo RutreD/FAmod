@@ -24,6 +24,9 @@ State state;
 
 export namespace core::ui {
 
+[[nodiscard]] bool IsOpen() noexcept { return state.window_open; }
+void SetOpen(bool open) noexcept { state.window_open = open; }
+
 void ApplyStyle(float scale) {
   scale = std::clamp(scale, 1.0f, 5.0f);
   ImGuiStyle &s = ImGui::GetStyle();
@@ -179,10 +182,8 @@ void Initialize() {
               static_cast<std::uint32_t>(VK_OEM_3));
 
   ImGuiHook::OnWndProc += [](HWND, UINT msg, WPARAM wp, LPARAM) -> bool {
-    if (core::hotkey::IsCapturing()) {
-      if (core::hotkey::FeedCapture(msg, wp)) {
-        return true;
-      }
+    if (core::hotkey::FeedCapture(msg, wp)) {
+      return true;
     }
 
     if (state.menu_hotkey.IsPressed(msg, wp)) {

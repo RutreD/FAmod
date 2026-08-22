@@ -6,3 +6,4 @@ export import :patch;
 export import :patch_registry;
 export import :hotkey;
 export import :ui;
+export import :game_events;

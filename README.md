@@ -10,7 +10,7 @@
 > [!IMPORTANT]
 > **Compatibility Notice**: FAmod is currently compatible **only with FAForever (FAF)**. It targets the engine modifications and structures present in FAForever's patched binary and will **not** work on vanilla Steam, GOG, or retail CD versions (non-FAF executables are automatically detected and rejected to prevent crashes).
 
-**In-Game GUI**: Press **`~` (Tilde)** at any time  (or type `famod` in the game console) to configure patches
+**In-Game GUI**: Press **`~` (Tilde)** at any time (or type `famod` in the game console) to configure patches.
 
 ![FAmod Patch Manager Window](docs/screenshots/main_window.png)
 
@@ -43,27 +43,26 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ## ✨ Features & Patches
 
+### 1. 📡 Range Rings Suite (Allied Intel, Strategic Defense, Capture)
+* **What it does**: A comprehensive suite for visualizing tactical ranges and overlays on the battlefield:
+  - **📡 Allied Intel Range Rings**: View intel coverage (Radar, Sonar, Omni) for allied units with three selectable modes:
+    - **Own units only**: Standard vanilla behavior.
+    - **Own units and allied static structures**: Shows allied radar towers, sonars, and bases without cluttering the screen with mobile units.
+    - **Own and all allied units**: Full vision and intel coverage for all allied units and structures (including mobile scouts and radars).
+  - **🛡️ Strategic Nuclear Defense (Anti-Nuke / SMD)**: Displays the protective interception radius for anti-nuke silos and units, with selectable scope (*Own units only* or *Own and allied units*) and customizable ring color.
+  - **🧲 Capture Range Ring**: Displays the exact capture radius for ACUs, Support Commanders (SACUs), and Engineers, with customizable ring color.
+* **Preview**:
 
-### 1. 📡 Allied Range Rings
-* **What it does**: Adds the ability to view allied intel range rings (Radar, Sonar, Omni) with three selectable modes:
-  - **Own units only**: Standard vanilla behavior.
-  - **Own units and allied static structures**: Shows allied radar towers, sonars, and bases without cluttering the screen with mobile units.
-  - **Own and all allied units**: Full vision coverage for all allied units and structures.
-* **Preview** *(Vanilla vs. FAmod Enabled)*:
+  **Allied Range Rings**
+  ![Allied Range Rings](docs/screenshots/allied_range_rings.png)
 
-  **Allied Buildings**
-  ![Allied Buildings](docs/screenshots/allied_rings_structures.png)
-
-  **All Allied Units**
-  ![All Allied Units](docs/screenshots/allied_rings_all_units.png)
-
-  **Own Units Only**
-  ![Own Units Only](docs/screenshots/allied_rings_own_only.png)
+  **Build Range & Capture Range Ring**
+  ![Build Range and Capture Range Ring](<docs/screenshots/capture_range_ring.png>)
 
 ---
 
 ### 2. 🛡️ Range Ring Stencil Fix
-* **What it does**: Fixes the game engine's internal stencil buffer overflow when rendering numerous overlapping range rings on screen. Eliminates visual artifacts and delivers a FPS boost.
+* **What it does**: Fixes the game engine's internal stencil buffer overflow when rendering numerous overlapping range rings on screen. Eliminates visual artifacts and delivers an FPS boost.
 * **Preview**:
   ![Range Ring Stencil Fix](docs/screenshots/stencil_fix.png)
 
@@ -118,7 +117,7 @@ The default path is <code>C:\ProgramData\FAForever\bin</code> (and <code>C:\Prog
 ---
 ---
 
-# 🧑‍💻 Developer & AI Sloper Guide
+# 🧑‍💻 Developer & AI Guide
 
 This section is for developers and AI coding agents working on the codebase, adding binary patches, or building custom configurations.
 
@@ -192,7 +191,7 @@ Each patch inherits from the `IPatch` base interface (`core:patch`) and provides
 * **Localization (`tr`)**: Use `tr("English text", {{Language::Russian, "Текст"}, {Language::Chinese, "文本"}})` for all user-visible strings. Returns a `LocalizedString` which implicitly converts to both `std::string_view` and `const char*` / `.c_str()`.
 * **Settings (`SettingsBinder`)**: Declarative two-way serialization via `b.Bind("Key.name", variable, default_value)`. Automatically handles both loading on startup and saving when the user modifies settings in the UI.
 * **In-game Console Variables**: Register console variables with `fa::ConDescReg` so players can inspect or toggle values directly from the in-game console (`~`).
-* **JIT Code Lifetime**: When using `Xbyak::CodeGenerator` or `rcmp` hooks inside `Apply()`, ensure code buffers and variable descriptors remain alive across the process lifetime (e.g. `static Trampoline tramp;` or member variables).
+* **JIT Code Lifetime**: When using `Xbyak::CodeGenerator` or hooks inside `Apply()`, ensure code buffers and variable descriptors remain alive across the process lifetime (e.g. `static Trampoline tramp;` or member variables).
 
 ---
 
@@ -284,90 +283,55 @@ void MyFeaturePatch::Apply() {
 
 ---
 
-#### Option B: Patch Without Settings / UI (`src/patches/my_fix/patch.cppm`)
+#### Option B: Multi-Partition Modular Patch (e.g. `src/patches/range_rings/`)
 
-For patches that only apply fixes or optimizations without user-configurable options, `RenderUi()` and `BindSettings()` can be omitted entirely (the base class provides defaults):
+For larger patches with multiple components, split the patch into internal C++23 implementation partitions:
 
+```
+src/patches/range_rings/
+├── allied.cppm              # Allied intel logic, callbacks & Xbyak hooks (:allied)
+├── strategic_defense.cppm   # Strategic defense extractor & Lua injection (:strategic_defense)
+├── capture.cppm             # Capture extractor & Lua injection (:capture)
+├── ui.cppm                  # ImGui configuration UI (:ui)
+└── patch.cppm               # Main module interface (patch.range_rings)
+```
+
+In `src/patches/range_rings/patch.cppm`:
 ```cpp
-module;
-#include <xbyak/xbyak.h>
+export module patch.range_rings;
 
-export module patch.my_fix;
+import :allied;
+import :strategic_defense;
+import :capture;
+import :ui;
 import core;
 
-export class MyFixPatch : public IPatch {
+export class RangeRingsPatch : public IPatch {
 public:
   [[nodiscard]] std::string_view Name() const noexcept override {
-    return tr("My Engine Fix",
-              {{Language::Russian, "Исправление движка"},
-               {Language::Chinese, "引擎修复"}});
+    return tr("Range Rings", {{Language::Russian, "Кольца радиусов"}, {Language::Chinese, "范围圈设置"}});
   }
-
-  [[nodiscard]] std::string_view Description() const noexcept override {
-    return tr("Fixes an internal engine issue.",
-              {{Language::Russian, "Исправляет ошибку в движке игры."},
-               {Language::Chinese, "修复游戏引擎内部问题。"}});
-  }
-
+  
   void Apply() override {
-    // Apply hooks / memory modifications
+    patch::range_rings::ApplyAllied();
+    patch::range_rings::ApplyStrategicDefense();
+    patch::range_rings::ApplyCapture();
+  }
+
+  void RenderUi() override {
+    patch::range_rings::RenderRangeRingsUi();
+  }
+
+  void BindSettings(SettingsBinder &b) override {
+    b.Bind("RangeRings.allied_behavior", patch::range_rings::allied_behavior_, ...);
+    b.Bind("RangeRings.smd_enabled", patch::range_rings::smd_enabled_, true);
+    b.Bind("RangeRings.smd_behavior", patch::range_rings::smd_behavior_, ...);
+    b.Bind("RangeRings.smd_color", patch::range_rings::smd_color_, ...);
+    b.Bind("RangeRings.capture_enabled", patch::range_rings::capture_enabled_, true);
+    b.Bind("RangeRings.capture_color", patch::range_rings::capture_color_, ...);
   }
 };
 ```
-
----
-
-#### Option C: Multi-File Patch (`patch.cppm` + `ui.cppm`)
-
-For complex patches with extensive ImGui menus, separate the patch logic and UI into two files in `src/patches/<patch_name>/`:
-
-1. `src/patches/my_feature/patch.cppm`:
-   ```cpp
-   module;
-   #include <xbyak/xbyak.h>
-
-   export module patch.my_feature;
-   import fa;
-   import core;
-
-   using namespace fa;
-
-   export class MyFeaturePatch : public IPatch {
-   public:
-     inline static bool enabled_{true};
-
-     [[nodiscard]] std::string_view Name() const noexcept override {
-       return tr("My Feature", {{Language::Russian, "Моя фича"}, {Language::Chinese, "我的功能"}});
-     }
-     [[nodiscard]] std::string_view Description() const noexcept override {
-       return tr("Description...", {{Language::Russian, "Описание..."}, {Language::Chinese, "描述..."}});
-     }
-
-     void Apply() override;
-     void RenderUi() override; // Implemented in ui.cppm
-
-     void BindSettings(SettingsBinder &b) override {
-       b.Bind("MyFeature.enabled", enabled_, true);
-     }
-   };
-
-   void MyFeaturePatch::Apply() {
-     // Apply hooks
-   }
-   ```
-
-2. `src/patches/my_feature/ui.cppm`:
-   ```cpp
-   module;
-   #include <imgui.h>
-
-   module patch.my_feature;
-   import core;
-
-   void MyFeaturePatch::RenderUi() {
-     ImGui::Checkbox(tr("Enable feature", {{Language::Russian, "Включить"}, {Language::Chinese, "启用"}}), &enabled_);
-   }
-   ```
 
 ---
 

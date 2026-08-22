@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <string>
 #include <string_view>
 #include <type_traits>
 
@@ -38,6 +39,10 @@ struct EngineStats;
 struct WRenViewport;
 struct LuaState;
 struct Device;
+template <typename T> class shared_ptr;
+template <typename T> struct MemBuffer;
+using CharMemBuffer = MemBuffer<char>;
+using ConstMemBuffer = MemBuffer<const char>;
 
 template <typename T>
 [[nodiscard]] constexpr T& MemoryRef(uintptr_t addr) noexcept {
@@ -120,65 +125,6 @@ struct basic_string;
 using string = basic_string<char>;
 using wstring = basic_string<wchar_t>;
 
-#define SSO_bytes 0x10ul
-template <typename T> struct basic_string {
-  static constexpr uint32_t sso_size = SSO_bytes / sizeof(T);
-  uint32_t ptr;
-  union {
-    T str[sso_size];
-    T *_data;
-  };
-  uint32_t strLen;
-  uint32_t capacity;
-
-  basic_string() noexcept {
-    ptr = 0;
-    str[0] = T(0);
-    strLen = 0;
-    capacity = sso_size - 1;
-  }
-
-  basic_string(const T *s) {
-    if constexpr (std::is_same_v<char, T>)
-      reinterpret_cast<void(__thiscall *)(void *, const char *)>(0x405520)(this, s);
-    else if constexpr (std::is_same_v<wchar_t, T>)
-      reinterpret_cast<void(__thiscall *)(void *, const wchar_t *)>(0x938FD0)(this, s);
-    else
-      static_assert(false, "Unknown type T.");
-  }
-
-  [[nodiscard]] inline const T *data() const noexcept { return capacity < sso_size ? static_cast<const T*>(str) : _data; }
-  [[nodiscard]] inline T *data() noexcept { return capacity < sso_size ? static_cast<T*>(str) : _data; }
-  [[nodiscard]] inline uint32_t size() const noexcept { return strLen; }
-  [[nodiscard]] inline uint32_t length() const noexcept { return strLen; }
-  [[nodiscard]] inline bool empty() const noexcept { return strLen == 0; }
-
-  [[nodiscard]] inline std::basic_string_view<T> view() const noexcept {
-    return {data(), static_cast<std::size_t>(strLen)};
-  }
-
-  constexpr operator std::basic_string_view<T>() const noexcept {
-    return view();
-  }
-
-  inline void clear() noexcept {
-    if (capacity >= sso_size) {
-      free(data());
-    }
-    ptr = 0;
-    str[0] = T(0);
-    strLen = 0;
-    capacity = sso_size - 1;
-  }
-
-  ~basic_string() { clear(); }
-};
-
-VALIDATE_SIZE(string, 0x1C);
-static_assert(string::sso_size == 0x10);
-VALIDATE_SIZE(wstring, 0x1C);
-static_assert(wstring::sso_size == 0x8);
-
 template <typename T>
 struct Result {
   T *object = nullptr;
@@ -210,4 +156,3 @@ template <typename T>
 [[nodiscard]] inline const T &GetField(const void *ptr, size_t offset) noexcept {
   return *Offset<const T *>(ptr, offset);
 }
-

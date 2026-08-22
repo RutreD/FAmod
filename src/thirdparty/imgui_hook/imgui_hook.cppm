@@ -8,7 +8,7 @@ module;
 #include "imgui_impl_win32.h"
 
 export module imgui_hook;
-export import :signal;
+export import imgui_hook.signal;
 
 import std;
 export {

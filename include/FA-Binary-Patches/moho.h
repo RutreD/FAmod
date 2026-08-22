@@ -571,24 +571,59 @@ struct fastvector_n : public fastvector<T>
 };
 
 template<class T>
-struct shared_ptr
+struct MemBuffer
 {
-	T *px;
-	void *pn; // boost::detail::shared_count
+	using type = T;
 
-	T &operator*() {
-		return *this->px;
+	shared_ptr<type> mData{};
+	type* mBegin{nullptr};
+	type* mEnd{nullptr};
+
+	MemBuffer() noexcept = default;
+	MemBuffer(const MemBuffer& cpy) noexcept = default;
+	~MemBuffer() noexcept = default;
+
+	MemBuffer(shared_ptr<type> ptr, type* begin, type* end) noexcept
+		: mData(ptr), mBegin(begin), mEnd(end) {}
+
+	[[nodiscard]] inline std::size_t size() const noexcept {
+		return (mBegin && mEnd && mEnd >= mBegin) ? static_cast<std::size_t>(mEnd - mBegin) : 0u;
 	}
-	T *operator->() {
-		return this->px;
+
+	[[nodiscard]] inline std::basic_string_view<std::remove_cv_t<T>> view() const noexcept {
+		return {mBegin, size()};
 	}
-	T *get() {
-		return this->px;
+
+	inline void append(std::string_view text) {
+		std::size_t old_size = size();
+		std::size_t new_size = old_size + text.size() + 2;
+		char* new_buf = new char[new_size + 1];
+
+		if (old_size > 0 && mBegin) {
+			std::memcpy(new_buf, mBegin, old_size);
+		}
+		new_buf[old_size] = '\n';
+		std::memcpy(new_buf + old_size + 1, text.data(), text.size());
+		new_buf[new_size - 1] = '\n';
+		new_buf[new_size] = '\0';
+
+		mData = shared_ptr<type>(reinterpret_cast<type*>(new_buf));
+		mBegin = reinterpret_cast<type*>(new_buf);
+		mEnd = reinterpret_cast<type*>(new_buf + new_size);
 	}
-	operator bool() {
-		return this->px != nullptr;
+
+	inline MemBuffer &operator+=(std::string_view text) {
+		append(text);
+		return *this;
 	}
 };
+using CharMemBuffer = MemBuffer<char>;
+using ConstMemBuffer = MemBuffer<const char>;
+
+VALIDATE_SIZE(ConstMemBuffer, 0x10);
+VALIDATE_OFFSET(ConstMemBuffer, mData, 0x0);
+VALIDATE_OFFSET(ConstMemBuffer, mBegin, 0x8);
+VALIDATE_OFFSET(ConstMemBuffer, mEnd, 0xC);
 
 // T extends WeakObject
 template<class T>
@@ -1468,10 +1503,14 @@ struct RRuleGameRulesImpl : RRuleGameRules, CDiskWatchListener
 };
 
 struct CUIManager // : IUIManager
-{				  // 0x0084C9CB, 0x78 bytes
-	// at 0x30
-	LuaState *LState; // from [10A6478]
+{ // 0x0084C9CB, 0x78 bytes
+	void *vtable;
+	char pad_04[0x2C];
+	LuaState *mState; // 0x30
+	char pad_34[0x44];
 };
+VALIDATE_SIZE(CUIManager, 0x78);
+VALIDATE_OFFSET(CUIManager, mState, 0x30);
 
 struct Array2D
 {
@@ -3204,6 +3243,40 @@ struct MapImager
 struct MeshThumbnailRenderer
 { // 0x3C bytes
 	void *vtable;
+};
+
+struct RangeInfo
+{
+	float x;
+	float z;
+	float min_range;
+	float max_range;
+};
+
+struct RangeExtractor
+{
+	void *operator new(size_t size) { return shi_new(size); }
+	void operator delete(void *ptr) { free(ptr); }
+
+	virtual ~RangeExtractor() = default;
+	virtual bool GetRange(RangeInfo *out, const RUnitBlueprint *blueprint, const Vector3f *pos) = 0;
+	virtual bool Extract(RangeInfo *out, UserUnit *unit, float interp) = 0;
+
+	template <typename T, typename... Args>
+	static T *Register(const char *name, Args &&...args) {
+		string str(name);
+		auto **slot = reinterpret_cast<RangeExtractor **(__thiscall *)(void *)>(0x7F00A0)(&str);
+		auto *extractor = new T(static_cast<Args &&>(args)...);
+		*slot = extractor;
+		return extractor;
+	}
+
+	static RangeExtractor *Register(const char *name, RangeExtractor *extractor) {
+		string str(name);
+		auto **slot = reinterpret_cast<RangeExtractor **(__thiscall *)(void *)>(0x7F00A0)(&str);
+		*slot = extractor;
+		return extractor;
+	}
 };
 
 struct RangeRenderer

@@ -2,6 +2,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <string>
 #include <string_view>
 #include <type_traits>
 

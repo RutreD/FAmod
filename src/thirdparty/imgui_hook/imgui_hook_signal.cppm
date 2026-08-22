@@ -1,4 +1,4 @@
-export module imgui_hook:signal;
+export module imgui_hook.signal;
 
 import std;
 

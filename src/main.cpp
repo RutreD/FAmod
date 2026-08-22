@@ -1,4 +1,7 @@
 #include <Windows.h>
+#if defined(_DEBUG)
+#include <cstdio>
+#endif
 
 import std;
 import core.app;

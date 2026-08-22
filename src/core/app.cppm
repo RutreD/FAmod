@@ -9,7 +9,7 @@ import std;
 import core;
 import imgui_hook;
 
-import patch.allied_range_rings;
+import patch.range_rings;
 import patch.range_ring_stencil;
 import patch.minimap_ranges;
 import patch.network_stats;
@@ -23,8 +23,10 @@ void Initialize() {
   ImGuiHook::OnFrame += [] { ImGui::ShowDemoWindow(); };
 #endif
 
+  core::events::Initialize();
+
   auto &registry = PatchRegistry::Instance();
-  registry.RegisterPatch<AlliedRangeRingsPatch>();
+  registry.RegisterPatch<RangeRingsPatch>();
   registry.RegisterPatch<RangeRingStencilPatch>();
   registry.RegisterPatch<HealthBarsPatch>();
   registry.RegisterPatch<NetworkStatsPatch>();
@@ -44,14 +46,21 @@ void Initialize() {
               ImGuiHook::OnWndProc.emit_iterate(hWnd, uMsg, wParam, lParam);
           if (std::ranges::contains(signal_results, true))
             return 0;
-          if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
-            return 0;
-          if ((uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) ||
-              (uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST)) {
-            const auto &io = ImGui::GetIO();
-            if (io.WantCaptureMouse || io.WantCaptureKeyboard)
+
+          if (core::ui::IsOpen()) {
+            if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
               return 0;
+            auto &io = ImGui::GetIO();
+            if (uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) {
+              if (io.WantCaptureKeyboard)
+                return 0;
+            }
+            if (uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) {
+              if (io.WantCaptureMouse)
+                return 0;
+            }
           }
+
           return original(hWnd, uMsg, wParam, lParam);
         });
 

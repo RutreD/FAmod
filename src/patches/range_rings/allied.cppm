@@ -1,69 +1,54 @@
 module;
 #include <xbyak/xbyak.h>
 
-export module patch.allied_range_rings;
+module patch.range_rings:allied;
+
+import :strategic_defense;
 import fa;
 import core;
 import std;
 
 using namespace fa;
 
-export enum class IntelRangeBehavior : int {
+namespace patch::range_rings {
+
+enum class IntelRangeBehavior : int {
   kOwnUnits = 0,
   kOwnUnitsAndAlliedBuildings = 1,
   kOwnUnitsAndAlliedUnits = 2,
 };
 
-export class AlliedRangeRingsPatch : public IPatch {
-public:
-  inline static IntelRangeBehavior behavior_{
-      IntelRangeBehavior::kOwnUnitsAndAlliedBuildings};
-
-  [[nodiscard]] std::string_view Name() const noexcept override {
-    return tr("Allied Range Rings",
-              {{Language::Russian, "Кольца радиуса союзников"},
-               {Language::Chinese, "友军范围圈"}});
-  }
-
-  [[nodiscard]] std::string_view Description() const noexcept override {
-    return tr(
-        "Controls intel range rings for allied units. Also includes bug fixes "
-        "and performance (FPS) optimizations.",
-        {{Language::Russian,
-          "Контролирует отображение колец радиуса для союзников. Так же "
-          "содержит исправления ошибок и оптимизацию производительности "
-          "(FPS)."},
-         {Language::Chinese,
-          "控制友军单位的侦察范围圈显示。还包含错误修复及帧率（FPS）优化。"}});
-  }
-
-  void Apply() override;
-  void RenderUi() override;
-
-  void BindSettings(SettingsBinder &b) override {
-    b.Bind("AlliedRangeRings.behavior", behavior_,
-           IntelRangeBehavior::kOwnUnitsAndAlliedBuildings);
-  }
-};
+inline IntelRangeBehavior allied_behavior_{
+    IntelRangeBehavior::kOwnUnitsAndAlliedBuildings};
 
 UserUnit *__fastcall RenderRangeFilter(UserUnit *self, uintptr_t esp) {
   auto session = g_CWldSession;
   if (self->mArmy->mConstDat.mIndex == session->focusArmyIndex) {
     return session->selectedUnits.contains(self) ? nullptr : self;
   }
+
   const auto &range_name_str = **reinterpret_cast<string **>(esp + 0x30);
   const std::string_view range_name = range_name_str.view();
-  const bool is_intel =
-      range_name == "Radar" || range_name == "Omni" || range_name == "Sonar";
-  return is_intel ? self : nullptr;
+
+  const bool is_intel = (range_name == "Radar" || range_name == "Omni" ||
+                         range_name == "Sonar") &&
+                        (allied_behavior_ != IntelRangeBehavior::kOwnUnits);
+
+  const bool is_smd =
+      smd_enabled_ && (range_name == "StrategicDefense") &&
+      (smd_behavior_ == StrategicDefenseBehavior::kOwnAndAlliedUnits);
+
+  return (is_intel || is_smd) ? self : nullptr;
 }
 
 void __fastcall SyncVisionRange(ReconBlip *recon_blip, Unit *unit) {
   auto &recon_attr = recon_blip->Entity::mVarDat.mAttributes;
   auto &unit_attr = unit->mVarDat.mAttributes;
+
   recon_attr.SetIntelRadius(ENTATTR_Vision,
                             unit_attr.GetIntelRadius(ENTATTR_Vision));
-  if (unit->mArmy->IsAlly(g_CWldSession->focusArmyIndex)) {
+
+  if (unit->mArmy && unit->mArmy->IsAlly(g_CWldSession->focusArmyIndex)) {
     recon_attr.SetIntelRadius(ENTATTR_Radar,
                               unit_attr.GetIntelRadius(ENTATTR_Radar));
     recon_attr.SetIntelRadius(ENTATTR_Sonar,
@@ -76,22 +61,30 @@ void __fastcall SyncVisionRange(ReconBlip *recon_blip, Unit *unit) {
 bool __cdecl ShouldAddUnit(UserArmy *focus_army, UserUnit *user_unit) {
   if (user_unit->mArmy == focus_army)
     return true;
-  if (AlliedRangeRingsPatch::behavior_ == IntelRangeBehavior::kOwnUnits)
-    return false;
+
   if (!user_unit->mArmy->IsAlly(g_CWldSession->focusArmyIndex))
     return false;
 
   auto blueprint = static_cast<RUnitBlueprint *>(user_unit->mParams.mBlueprint);
-  if (AlliedRangeRingsPatch::behavior_ ==
-          IntelRangeBehavior::kOwnUnitsAndAlliedBuildings &&
-      blueprint->mPhysics.mMotionType != RULEUMT_None)
-    return false;
 
-  auto &unit_attr = user_unit->mVarDat.mAttributes;
-  const bool has_intel = (unit_attr.GetIntelRadius(ENTATTR_Radar) |
-                          unit_attr.GetIntelRadius(ENTATTR_Sonar) |
-                          unit_attr.GetIntelRadius(ENTATTR_Omni)) > 0;
-  return has_intel;
+  bool has_intel = false;
+  if (allied_behavior_ != IntelRangeBehavior::kOwnUnits) {
+    if (allied_behavior_ == IntelRangeBehavior::kOwnUnitsAndAlliedUnits ||
+        blueprint->mPhysics.mMotionType == RULEUMT_None) {
+      auto &unit_attr = user_unit->mVarDat.mAttributes;
+      has_intel = (unit_attr.GetIntelRadius(ENTATTR_Radar) |
+                   unit_attr.GetIntelRadius(ENTATTR_Sonar) |
+                   unit_attr.GetIntelRadius(ENTATTR_Omni)) != 0;
+    }
+  }
+
+  bool has_smd = false;
+  if (smd_enabled_ &&
+      smd_behavior_ == StrategicDefenseBehavior::kOwnAndAlliedUnits) {
+    has_smd = FindStrategicDefenseWeapon(blueprint) != nullptr;
+  }
+
+  return has_intel || has_smd;
 }
 
 struct RenderRangeFilterCall : public Xbyak::CodeGenerator {
@@ -152,20 +145,12 @@ struct RevertOldPatch : public Xbyak::CodeGenerator {
   }
 };
 
-void AlliedRangeRingsPatch::Apply() {
-  static ConDescReg con_intel_range_behavior{
-      "ren_IntelRangeBehavior",
-      "Intel range rings behavior: 0 = Own units only; 1 = Own units and "
-      "allied buildings; 2 = Own and all allied units",
-      reinterpret_cast<int *>(&behavior_)}; // Keep registered console variable
-                                            // alive in memory across the
-                                            // process lifetime
-
-  static ShouldAddUnitTrampoline tramp; // Keep generated JIT code buffer alive
-                                        // in memory across the process lifetime
-
+void ApplyAllied() {
+  static ShouldAddUnitTrampoline tramp;
   ShouldAddUnitJmp saj(tramp.getCode<const void *>());
   SyncVisionRangeCall svrc;
   RenderRangeFilterCall ruufc;
   RevertOldPatch rop;
 }
+
+} // namespace patch::range_rings
