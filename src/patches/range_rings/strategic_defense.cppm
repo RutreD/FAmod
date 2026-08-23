@@ -1,10 +1,8 @@
-module;
-
 module patch.range_rings:strategic_defense;
 
-import fa;
-import core;
 import std;
+import core;
+import fa;
 
 namespace patch::range_rings {
 
@@ -21,13 +19,13 @@ inline std::array<float, 4> smd_color_{0.0f, 0.0f, 1.0f, 0.6f};
 // Formats float RGBA to Forged Alliance Lua 'AARRGGBB' hex string
 [[nodiscard]] inline std::string ToFaColorHex(const std::array<float, 4> &col) {
   const auto r =
-      static_cast<uint8_t>(std::clamp(col[0], 0.0f, 1.0f) * 255.0f + 0.5f);
+      static_cast<std::uint8_t>(std::clamp(col[0], 0.0f, 1.0f) * 255.0f + 0.5f);
   const auto g =
-      static_cast<uint8_t>(std::clamp(col[1], 0.0f, 1.0f) * 255.0f + 0.5f);
+      static_cast<std::uint8_t>(std::clamp(col[1], 0.0f, 1.0f) * 255.0f + 0.5f);
   const auto b =
-      static_cast<uint8_t>(std::clamp(col[2], 0.0f, 1.0f) * 255.0f + 0.5f);
+      static_cast<std::uint8_t>(std::clamp(col[2], 0.0f, 1.0f) * 255.0f + 0.5f);
   const auto a =
-      static_cast<uint8_t>(std::clamp(col[3], 0.0f, 1.0f) * 255.0f + 0.5f);
+      static_cast<std::uint8_t>(std::clamp(col[3], 0.0f, 1.0f) * 255.0f + 0.5f);
   return std::format("{:02X}{:02X}{:02X}{:02X}", a, r, g, b);
 }
 
@@ -48,7 +46,7 @@ FindStrategicDefenseWeapon(const fa::RUnitBlueprint *blueprint) noexcept {
 
 struct StrategicDefenseExtractor : public fa::RangeExtractor {
   bool GetRange(fa::RangeInfo *out, const fa::RUnitBlueprint *blueprint,
-                const fa::Vector3f *pos) override {
+                const fa::Vector3f *pos) {
     if (!smd_enabled_ || !blueprint || !out || !pos)
       return false;
 
@@ -63,8 +61,7 @@ struct StrategicDefenseExtractor : public fa::RangeExtractor {
     return true;
   }
 
-  bool Extract(fa::RangeInfo *out, fa::UserUnit *unit,
-               float /*interp*/) override {
+  bool Extract(fa::RangeInfo *out, fa::UserUnit *unit, float /*interp*/) {
     if (!smd_enabled_ || !unit || !out)
       return false;
 

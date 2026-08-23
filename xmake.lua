@@ -63,7 +63,7 @@ package("rcmp")
     end)
 package_end()
 
-add_requires("rcmp")
+add_requires("rcmp master")
 add_requires("xbyak v7.40", "nlohmann_json develop")
 add_requires("imgui", {configs = {win32 = true, dx9 = true, no_obsolete_functions = true}})
 
@@ -79,6 +79,7 @@ target("famod")
     add_packages("xbyak", "nlohmann_json", "imgui", "rcmp")
 
     if get_config("toolchain") == "mingw" then
+        add_cxflags("-mincoming-stack-boundary=2", "-mstackrealign")
         add_shflags("src/thirdparty/dsound_proxy/dsound_proxy.def", {force = true})
         add_shflags("-Wl,--kill-at")
         add_syslinks("user32", "gdi32", "dwmapi", "d3d9", "imm32", "stdc++exp")

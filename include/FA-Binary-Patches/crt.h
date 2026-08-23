@@ -401,16 +401,17 @@ struct queue
 
 namespace detail {
 
+#if defined(_MSC_VER)
 class sp_counted_base
 {
 private:
 	sp_counted_base(const sp_counted_base &) = delete;
 	sp_counted_base & operator=(const sp_counted_base &) = delete;
 
+public:
 	long use_count_{1};
 	long weak_count_{1};
 
-public:
 	sp_counted_base() noexcept = default;
 	virtual ~sp_counted_base() noexcept = default;
 	virtual void dispose() noexcept = 0;
@@ -418,22 +419,22 @@ public:
 	virtual void * get_deleter(const void * ti) noexcept { return nullptr; }
 
 	void add_ref_copy() noexcept {
-		_InterlockedIncrement(&use_count_);
+		reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B2)(&use_count_);
 	}
 
 	void release() noexcept {
-		if (_InterlockedDecrement(&use_count_) == 0) {
+		if (reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B8)(&use_count_) == 0) {
 			dispose();
 			weak_release();
 		}
 	}
 
 	void weak_add_ref() noexcept {
-		_InterlockedIncrement(&weak_count_);
+		reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B2)(&weak_count_);
 	}
 
 	void weak_release() noexcept {
-		if (_InterlockedDecrement(&weak_count_) == 0) {
+		if (reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B8)(&weak_count_) == 0) {
 			destroy();
 		}
 	}
@@ -442,6 +443,10 @@ public:
 		return static_cast<long const volatile &>(use_count_);
 	}
 };
+
+VALIDATE_SIZE(sp_counted_base, 0xC);
+VALIDATE_OFFSET(sp_counted_base, use_count_, 0x4);
+VALIDATE_OFFSET(sp_counted_base, weak_count_, 0x8);
 
 template<class P>
 class sp_counted_impl_p : public sp_counted_base
@@ -477,6 +482,133 @@ public:
 		del(ptr);
 	}
 };
+
+#else
+
+struct sp_counted_base;
+
+struct sp_counted_base_vftable {
+	void* (__thiscall *scalar_deleting_destructor)(sp_counted_base* self, unsigned int flags);
+	void  (__thiscall *dispose)(sp_counted_base* self);
+	void  (__thiscall *destroy)(sp_counted_base* self);
+	void* (__thiscall *get_deleter)(sp_counted_base* self, const void* ti);
+};
+
+struct sp_counted_base
+{
+	const sp_counted_base_vftable *vftable_{nullptr};
+	long use_count_{1};
+	long weak_count_{1};
+
+	explicit constexpr sp_counted_base(const sp_counted_base_vftable *vt = nullptr) noexcept
+		: vftable_(vt), use_count_(1), weak_count_(1) {}
+	~sp_counted_base() noexcept = default;
+
+	void add_ref_copy() noexcept {
+		reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B2)(&use_count_);
+	}
+
+	void release() noexcept {
+		if (reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B8)(&use_count_) == 0) {
+			if (vftable_ && vftable_->dispose) vftable_->dispose(this);
+			weak_release();
+		}
+	}
+
+	void weak_add_ref() noexcept {
+		reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B2)(&weak_count_);
+	}
+
+	void weak_release() noexcept {
+		if (reinterpret_cast<long(__stdcall *)(volatile long*)>(0xA816B8)(&weak_count_) == 0) {
+			if (vftable_ && vftable_->destroy) vftable_->destroy(this);
+		}
+	}
+
+	[[nodiscard]] long use_count() const noexcept {
+		return static_cast<long const volatile &>(use_count_);
+	}
+};
+
+VALIDATE_SIZE(sp_counted_base, 0xC);
+VALIDATE_OFFSET(sp_counted_base, vftable_, 0x0);
+VALIDATE_OFFSET(sp_counted_base, use_count_, 0x4);
+VALIDATE_OFFSET(sp_counted_base, weak_count_, 0x8);
+
+template<class P>
+struct sp_counted_impl_p : public sp_counted_base
+{
+	P ptr;
+
+	static void* __thiscall DestroyThunk(sp_counted_base* self, unsigned int flags) {
+		auto* p = static_cast<sp_counted_impl_p*>(self);
+		p->~sp_counted_impl_p();
+		if (flags & 1) delete p;
+		return self;
+	}
+
+	static void __thiscall DisposeThunk(sp_counted_base* self) {
+		auto* p = static_cast<sp_counted_impl_p*>(self);
+		delete[] p->ptr;
+	}
+
+	static void __thiscall DestroyObjThunk(sp_counted_base* self) {
+		delete static_cast<sp_counted_impl_p*>(self);
+	}
+
+	static void* __thiscall GetDeleterThunk(sp_counted_base*, const void*) {
+		return nullptr;
+	}
+
+	static inline constexpr sp_counted_base_vftable s_vftable = {
+		&DestroyThunk,
+		&DisposeThunk,
+		&DestroyObjThunk,
+		&GetDeleterThunk
+	};
+
+	explicit sp_counted_impl_p(P p) noexcept
+		: sp_counted_base(&s_vftable), ptr(p) {}
+};
+
+template<class P, class D>
+struct sp_counted_impl_pd : public sp_counted_base
+{
+	P ptr;
+	D del;
+
+	static void* __thiscall DestroyThunk(sp_counted_base* self, unsigned int flags) {
+		auto* p = static_cast<sp_counted_impl_pd*>(self);
+		p->~sp_counted_impl_pd();
+		if (flags & 1) delete p;
+		return self;
+	}
+
+	static void __thiscall DisposeThunk(sp_counted_base* self) {
+		auto* p = static_cast<sp_counted_impl_pd*>(self);
+		p->del(p->ptr);
+	}
+
+	static void __thiscall DestroyObjThunk(sp_counted_base* self) {
+		delete static_cast<sp_counted_impl_pd*>(self);
+	}
+
+	static void* __thiscall GetDeleterThunk(sp_counted_base*, const void*) {
+		return nullptr;
+	}
+
+	static inline constexpr sp_counted_base_vftable s_vftable = {
+		&DestroyThunk,
+		&DisposeThunk,
+		&DestroyObjThunk,
+		&GetDeleterThunk
+	};
+
+	sp_counted_impl_pd(P p, D d) noexcept
+		: sp_counted_base(&s_vftable), ptr(p), del(d) {}
+};
+
+#endif
 
 class shared_count
 {

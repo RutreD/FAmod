@@ -1,4 +1,5 @@
 # Build and cache directories
+private/
 build/
 .xmake/
 .cache/
@@ -18,3 +19,4 @@ build/
 famod_settings.json
 imgui.ini
 *.log
+

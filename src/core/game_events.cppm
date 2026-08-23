@@ -1,4 +1,6 @@
 module;
+#include <Windows.h>
+#include <imgui.h>
 #include <rcmp.hpp>
 
 export module core:game_events;

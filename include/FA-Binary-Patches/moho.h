@@ -3253,6 +3253,8 @@ struct RangeInfo
 	float max_range;
 };
 
+#if defined(_MSC_VER)
+
 struct RangeExtractor
 {
 	void *operator new(size_t size) { return shi_new(size); }
@@ -3278,6 +3280,87 @@ struct RangeExtractor
 		return extractor;
 	}
 };
+
+#else
+
+struct RangeExtractor;
+
+struct RangeExtractor_vftable {
+	void* (__thiscall *scalar_deleting_destructor)(RangeExtractor* self, unsigned int flags);
+	bool  (__thiscall *GetRange)(RangeExtractor* self, RangeInfo *out, const RUnitBlueprint *blueprint, const Vector3f *pos);
+	bool  (__thiscall *Extract)(RangeExtractor* self, RangeInfo *out, UserUnit *unit, float interp);
+};
+
+struct RangeExtractor
+{
+	const RangeExtractor_vftable *vftable_{nullptr};
+
+	void *operator new(size_t size) { return shi_new(size); }
+	void operator delete(void *ptr) { free(ptr); }
+
+	explicit constexpr RangeExtractor(const RangeExtractor_vftable *vt = nullptr) noexcept
+		: vftable_(vt) {}
+	~RangeExtractor() noexcept = default;
+
+	template <typename T, typename... Args>
+	static T *Register(const char *name, Args &&...args);
+
+	static RangeExtractor *Register(const char *name, RangeExtractor *extractor) {
+		string str(name);
+		auto **slot = reinterpret_cast<RangeExtractor **(__thiscall *)(void *)>(0x7F00A0)(&str);
+		*slot = extractor;
+		return extractor;
+	}
+};
+
+VALIDATE_SIZE(RangeExtractor, 0x4);
+VALIDATE_OFFSET(RangeExtractor, vftable_, 0x0);
+
+namespace detail {
+
+template <typename T>
+struct RangeExtractorWrapper final : public RangeExtractor {
+	T impl;
+
+	static void* __thiscall DestroyThunk(RangeExtractor* self, unsigned int flags) {
+		auto* p = static_cast<RangeExtractorWrapper*>(self);
+		p->~RangeExtractorWrapper();
+		if (flags & 1) delete p;
+		return self;
+	}
+
+	static bool __thiscall GetRangeThunk(RangeExtractor* self, RangeInfo *out, const RUnitBlueprint *blueprint, const Vector3f *pos) {
+		auto* p = static_cast<RangeExtractorWrapper*>(self);
+		return p->impl.GetRange(out, blueprint, pos);
+	}
+
+	static bool __thiscall ExtractThunk(RangeExtractor* self, RangeInfo *out, UserUnit *unit, float interp) {
+		auto* p = static_cast<RangeExtractorWrapper*>(self);
+		return p->impl.Extract(out, unit, interp);
+	}
+
+	static inline constexpr RangeExtractor_vftable s_vt = {
+		&DestroyThunk,
+		&GetRangeThunk,
+		&ExtractThunk
+	};
+
+	template <typename... Args>
+	explicit RangeExtractorWrapper(Args&&... args) noexcept
+		: RangeExtractor(&s_vt), impl(static_cast<Args&&>(args)...) {}
+};
+
+} // namespace detail
+
+template <typename T, typename... Args>
+inline T *RangeExtractor::Register(const char *name, Args &&...args) {
+	string str(name);
+	auto **slot = reinterpret_cast<RangeExtractor **(__thiscall *)(void *)>(0x7F00A0)(&str);
+	auto *wrapper = new detail::RangeExtractorWrapper<T>(static_cast<Args &&>(args)...);
+	*slot = wrapper;
+	return &wrapper->impl;
+}
+#endif
 
 struct RangeRenderer
 { // 0x94 bytes
