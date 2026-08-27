@@ -96,6 +96,30 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ---
 
+### 7. 🎨 World Post-Processing
+* **What it does**: Adds a full ReShade-grade post-processing pipeline applied **only to the 3D world** (terrain, units, water, explosions), leaving strategic icons, health bars, and the entire game UI completely untouched. All effects run in a single fullscreen pass with a custom HLSL pixel shader compiled at runtime.
+* **Shader effects**:
+  - **FXAA 3.11** — Edge-directed world-only anti-aliasing
+  - **AMD FidelityFX CAS** — Contrast-adaptive sharpening without haloing
+  - **Exposure, Brightness & Contrast** — Combined single-MAD color correction
+  - **S-Curve Contrast** — Smooth midtone contrast without highlight/shadow clipping
+  - **Saturation & Vibrance** — Independent perceptual color intensity controls
+  - **Color Temperature & Tint** — Warm/cool and green/magenta axis shifts
+  - **Technicolor 3-Strip** — Classic vintage Hollywood film color process
+  - **Cineon DPX Film** — Kodak film scan density and highlight roll-off
+  - **Bleach Bypass** — Silver retention gritty military desaturation
+  - **ACES Filmic Tonemapping** — Industry-standard HDR tone curve
+  - **Split Toning** — Separate shadow and highlight color grading
+  - **Black Level / Shadow Lift** — Matte black / crushed shadows control
+  - **Vignette** — Smooth quadratic edge darkening
+  - **Animated Film Grain** — Temporally varying perceptual noise dithering
+  - **Gamma Correction** — Final display gamma adjustment
+* **15 built-in presets**: Default, Cinematic, Teal & Orange, Vibrant, Clarity & Punch, Grimdark Battlefield, Military Bleach, Emerald Sci-Fi, Cyberpunk Neon, Studio Cinema, Technicolor 1960s, Kodak DPX Film, Warm Sunlight, Cool Arctic — plus fully customizable sliders for every parameter.
+* **Preview**:
+  ![World Post-Processing](docs/screenshots/post_process.png)
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 <details>

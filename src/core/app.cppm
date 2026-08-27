@@ -15,6 +15,7 @@ import patch.minimap_ranges;
 import patch.network_stats;
 import patch.health_bars;
 import patch.share_factory_assist;
+import patch.post_process;
 
 export namespace core::app {
 
@@ -32,6 +33,7 @@ void Initialize() {
   registry.RegisterPatch<NetworkStatsPatch>();
   registry.RegisterPatch<MinimapRangesPatch>();
   registry.RegisterPatch<ShareFactoryAssistPatch>();
+  registry.RegisterPatch<PostProcessPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();
