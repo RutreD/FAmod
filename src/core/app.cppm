@@ -16,6 +16,8 @@ import patch.network_stats;
 import patch.health_bars;
 import patch.share_factory_assist;
 import patch.post_process;
+import patch.water;
+import patch.strategic_icons;
 
 export namespace core::app {
 
@@ -34,6 +36,8 @@ void Initialize() {
   registry.RegisterPatch<MinimapRangesPatch>();
   registry.RegisterPatch<ShareFactoryAssistPatch>();
   registry.RegisterPatch<PostProcessPatch>();
+  registry.RegisterPatch<WaterPatch>();
+  // registry.RegisterPatch<StrategicIconsPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();
