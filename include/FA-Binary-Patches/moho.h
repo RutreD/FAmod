@@ -612,6 +612,17 @@ struct MemBuffer
 		mEnd = reinterpret_cast<type*>(new_buf + new_size);
 	}
 
+	inline void assign(std::string_view text) {
+		std::size_t new_size = text.size();
+		char* new_buf = new char[new_size + 1];
+		std::memcpy(new_buf, text.data(), new_size);
+		new_buf[new_size] = '\0';
+
+		mData = shared_ptr<type>(reinterpret_cast<type*>(new_buf));
+		mBegin = reinterpret_cast<type*>(new_buf);
+		mEnd = reinterpret_cast<type*>(new_buf + new_size);
+	}
+
 	inline MemBuffer &operator+=(std::string_view text) {
 		append(text);
 		return *this;
