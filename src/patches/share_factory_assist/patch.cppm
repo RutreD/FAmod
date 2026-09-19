@@ -22,15 +22,17 @@ public:
   [[nodiscard]] std::string_view Description() const noexcept override {
     return tr(
         "Allows factories to issue assist orders for produced units (target "
-        "or ground rally). Assisting another factory preserves standard "
-        "build queue sharing.",
+        "or ground rally). Assisting another factory as the first command "
+        "copies its build queue, while queuing with Shift sets produced units "
+        "to assist it.",
         {{Language::Russian,
           "Позволяет фабрикам отдавать приказ ассиста для произведённых юнитов "
-          "(включая цель или приказ на землю). При ассисте другой фабрики "
-          "сохраняется стандартное распределение очереди постройки."},
+          "(на цель или точку на земле). Первый приказ на другую фабрику "
+          "копирует её очередь постройки, а через Shift — задаёт ассист "
+          "произведёнными юнитами."},
          {Language::Chinese,
-          "允许工厂为其生产的单位下达协助指令（包括目标协助或地面集结）。"
-          "协助另一座工厂时仍保持原版共享建造队列的行为。"}});
+          "允许工厂为其生产的单位下达协助指令（目标或地面集结点）。"
+          "对另一座工厂的首个指令将复制其建造队列，通过 Shift 添加则让生产出的单位协助该工厂。"}});
   }
 
   void Apply() override;
@@ -42,7 +44,7 @@ public:
 };
 
 void __stdcall OnIssueCommand(WeakSet<UserEntity> *units,
-                              SSTICommandIssueData *cmd, uint32_t clear_queue);
+                              SSTICommandIssueData *cmd, bool clear_queue);
 
 struct EngineThunks : public Xbyak::CodeGenerator {
 
@@ -50,12 +52,15 @@ struct EngineThunks : public Xbyak::CodeGenerator {
   using WeakSetDtorFn = void(__cdecl *)(WeakSet<UserEntity> *set);
   using IssueCommandFn = void(__cdecl *)(WeakSet<UserEntity> *units,
                                          const SSTICommandIssueData *cmd,
-                                         uint32_t clear_queue);
+                                         bool clear_queue);
+
+  using LookupEntityFn = UserEntity *(__cdecl *)(void *session, uint32_t ent_id);
 
   WeakSetCtorFn ws_ctor{nullptr};
   WeakSetDtorFn ws_dtor{nullptr};
   IssueCommandFn issue_cmd_orig{nullptr};
   IssueCommandFn issue_factory{nullptr};
+  LookupEntityFn lookup_entity{nullptr};
   const void *issue_bridge{nullptr};
 
   EngineThunks() {
@@ -79,8 +84,9 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     issue_factory = getCurr<IssueCommandFn>();
     push(ebx);
     mov(ebx, dword[esp + 8]);
-    push(dword[esp + 16]); // clear_queue
-    push(dword[esp + 16]); // cmd
+    movzx(eax, byte[esp + 16]); // clean clear_queue bool
+    push(eax);
+    push(dword[esp + 16]);      // cmd
     mov(eax, 0x008B0B30);
     call(eax);
     add(esp, 8);
@@ -89,9 +95,10 @@ struct EngineThunks : public Xbyak::CodeGenerator {
 
     // 4. Hook bridge for Moho::ISSUE_Command -> OnIssueCommand
     issue_bridge = getCurr<const void *>();
-    push(dword[esp + 8]); // clear_queue
-    push(dword[esp + 8]); // cmd
-    push(ebx);            // units
+    movzx(eax, byte[esp + 8]); // clean clear_queue bool (engine callers only set cl)
+    push(eax);
+    push(dword[esp + 8]);      // cmd
+    push(ebx);                 // units
     call(reinterpret_cast<const void *>(OnIssueCommand));
     ret();
 
@@ -100,8 +107,9 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     issue_cmd_orig = getCurr<IssueCommandFn>();
     push(ebx);
     mov(ebx, dword[esp + 8]);
-    push(dword[esp + 16]); // clear_queue
-    push(dword[esp + 16]); // cmd
+    movzx(eax, byte[esp + 16]); // clean clear_queue bool
+    push(eax);
+    push(dword[esp + 16]);      // cmd
     call(l_orig_prologue);
     add(esp, 8);
     pop(ebx);
@@ -111,6 +119,16 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     push(0xFFFFFFFF);
     push(0x00BB3958);
     jmp(reinterpret_cast<const void *>(0x008B05E7));
+
+    // 6. Caller for Moho::CWldSession::LookupEntityId (0x00894280: esi = session, push ent_id)
+    lookup_entity = getCurr<LookupEntityFn>();
+    push(esi);
+    mov(esi, dword[esp + 8]); // session
+    push(dword[esp + 12]);    // ent_id
+    mov(eax, 0x00894280);
+    call(eax);
+    pop(esi);
+    ret();
   }
 
   static EngineThunks &Instance() {
@@ -134,6 +152,32 @@ static void SplitFactories(WeakSet<UserEntity> *all_units,
   reinterpret_cast<SplitSelectedUnitsFn>(0x0081E9E0)(all_units, normal_units,
                                                      factory_units);
   ShareFactoryAssistPatch::is_factory_requested_ = false;
+}
+
+static bool IsTargetFactory(const SSTICommandIssueData *cmd) {
+  if (!cmd || cmd->mTarget.mType != AITARGET_Entity) {
+    return false;
+  }
+  void *session = *reinterpret_cast<void **>(0x010A6470);
+  if (!session) {
+    return false;
+  }
+  UserEntity *target_ent =
+      EngineThunks::Instance().lookup_entity(session, cmd->mTarget.mEnt);
+  if (!target_ent) {
+    return false;
+  }
+  void **vtable = *reinterpret_cast<void ***>(target_ent);
+  if (!vtable) {
+    return false;
+  }
+  auto is_unit_fn =
+      reinterpret_cast<UserUnit *(__thiscall *)(UserEntity *)>(vtable[3]);
+  UserUnit *target_unit = is_unit_fn(target_ent);
+  if (!target_unit) {
+    return false;
+  }
+  return target_unit->mIsFactory || target_unit->mFactoryManager != nullptr;
 }
 
 struct PatchJumpGenerator : public Xbyak::CodeGenerator {
@@ -202,9 +246,16 @@ struct GroundFilterTrampoline : public Xbyak::CodeGenerator {
 
 // Handles ALL Assist targets uniformly: Units, Structures, Ground Rally Points
 void __stdcall OnIssueCommand(WeakSet<UserEntity> *units,
-                              SSTICommandIssueData *cmd, uint32_t clear_queue) {
+                              SSTICommandIssueData *cmd, bool clear_queue) {
   if (!ShareFactoryAssistPatch::enabled_ || !units || units->Empty() || !cmd ||
       cmd->mCommandType != UNITCOMMAND_Guard) {
+    EngineThunks::Instance().issue_cmd_orig(units, cmd, clear_queue);
+    return;
+  }
+
+  // Factory-on-factory assist with clear_queue (first command, overwriting queue):
+  // preserve default behavior (copies build queue).
+  if (clear_queue && IsTargetFactory(cmd)) {
     EngineThunks::Instance().issue_cmd_orig(units, cmd, clear_queue);
     return;
   }
