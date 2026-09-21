@@ -1,0 +1,48 @@
+name: Test Toolchains
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  test-toolchains:
+    name: Test ${{ matrix.toolchain }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - msvc
+          # WAIT FOR XMAKE v3.1.1
+          # - clang
+          # WAIT FOR GCC16
+          # - mingw
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup Xmake & Cache
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+          package-cache: true
+          package-cache-key: ${{ runner.os }}-xmake-pkg-${{ matrix.toolchain }}
+          build-cache: true
+          build-cache-key: ${{ runner.os }}-xmake-build-${{ matrix.toolchain }}
+
+      - name: Configure project
+        run: xmake f -p windows -a x86 -m release --toolchain=${{ matrix.toolchain }} --runtimes=MT -y -v
+
+      - name: Build
+        run: xmake -v
+

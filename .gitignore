@@ -1,0 +1,23 @@
+# Build and cache directories
+private/
+build/
+.xmake/
+.cache/
+.vscode/
+external/
+xmake-skills/
+
+# Compiled binaries and intermediate artifacts
+*.obj
+*.pcm
+*.pdb
+*.ilk
+*.lib
+*.exp
+*.dll
+*.exe
+
+# Runtime generated settings and caches
+famod_settings.json
+imgui.ini
+*.log

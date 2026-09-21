@@ -1,0 +1,115 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Build mode"
+        required: true
+        type: choice
+        options:
+          - release
+          - debug
+        default: release
+      runtimes:
+        description: "C/C++ Runtime (MSVC)"
+        required: true
+        type: choice
+        options:
+          - MT
+          - MD
+          - MTd
+          - MDd
+        default: MT
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Xmake & Cache
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+          package-cache: true
+          package-cache-key: ${{ runner.os }}-xmake-release-pkg-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}
+          build-cache: true
+          build-cache-key: ${{ runner.os }}-xmake-release-build-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}
+
+      - name: Configure project
+        run: >
+          xmake f -p windows -a x86
+          -m ${{ inputs.mode || 'release' }}
+          --runtimes=${{ inputs.runtimes || 'MT' }}
+          --toolchain=msvc
+          -y -v
+
+      - name: Build
+        run: xmake -v
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: famod-dsound-${{ inputs.mode || 'release' }}-${{ inputs.runtimes || 'MT' }}
+          path: |
+            build/windows/x86/${{ inputs.mode || 'release' }}/dsound.dll
+          if-no-files-found: error
+
+      - name: Generate Changelog
+        id: changelog
+        shell: bash
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || true)
+          else
+            PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          fi
+
+          COMMITS=""
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --no-merges 2>/dev/null || true)
+          fi
+
+          if [ -z "$COMMITS" ]; then
+            COMMITS=$(git log -n 20 --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --no-merges 2>/dev/null || true)
+          fi
+
+          cat << 'EOF' > changelog.md
+          ### 📝 Commits
+
+          EOF
+
+          echo "$COMMITS" >> changelog.md
+
+          cat << 'EOF' >> changelog.md
+
+          ---
+          **Build Details**:
+          * **Target**: `ForgedAlliance.exe (FAForever)`
+          * **Mode**: `${{ inputs.mode || 'release' }}`
+          * **Runtime**: `${{ inputs.runtimes || 'MT' }}`
+          * **Commit**: [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('nightly-r{0}', github.run_number) }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || format('Nightly Build {0}', github.run_number) }}
+          body_path: changelog.md
+          files: |
+            build/windows/x86/${{ inputs.mode || 'release' }}/dsound.dll
+          draft: false
+          prerelease: ${{ github.ref_type != 'tag' }}
