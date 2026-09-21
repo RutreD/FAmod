@@ -82,7 +82,7 @@ target("famod")
         add_cxflags("-mincoming-stack-boundary=2", "-mstackrealign")
         add_shflags("src/thirdparty/dsound_proxy/dsound_proxy.def", {force = true})
         add_shflags("-Wl,--kill-at")
-        add_syslinks("user32", "gdi32", "dwmapi", "d3d9", "imm32", "stdc++exp")
+        add_syslinks("user32", "gdi32", "shell32", "dwmapi", "d3d9", "imm32", "stdc++exp")
     end
 
     if has_config("launch_game") then

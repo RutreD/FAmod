@@ -120,6 +120,11 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ---
 
+### 8. 📼 Replay Desync Fix
+* **What it does**: Fixes a long-standing engine defect where replays desync on the tick after any player leaves or disconnects. In vanilla Forged Alliance, `CMDST_CommandSourceTerminated` clears the internal `hasCommandSource` flag in `CClientBase`, but the handler for `CMDST_SetCommandSource` never restores it. Because all player inputs during replay playback are funneled through a single `CReplayClient`, subsequent command packets in that beat are discarded, causing replays to permanently diverge. This patch restores the flag upon setting a command source and prevents the desynchronization.
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 <details>

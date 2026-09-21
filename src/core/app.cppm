@@ -16,6 +16,7 @@ import patch.network_stats;
 import patch.health_bars;
 import patch.share_factory_assist;
 import patch.post_process;
+import patch.replay_desync;
 
 export namespace core::app {
 
@@ -34,6 +35,7 @@ void Initialize() {
   registry.RegisterPatch<MinimapRangesPatch>();
   registry.RegisterPatch<ShareFactoryAssistPatch>();
   registry.RegisterPatch<PostProcessPatch>();
+  registry.RegisterPatch<ReplayDesyncPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();
