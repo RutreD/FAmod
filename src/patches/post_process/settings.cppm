@@ -86,7 +86,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [2. Cinematic] — Rich filmic tone curve with ACES, warm highlights, soft shadows
+    // [2. Cinematic] — Rich filmic tone curve with ACES, warm highlights, soft
+    // shadows
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.02f,
@@ -112,7 +113,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [3. Teal & Orange] — Hollywood blockbuster grade, crisp cool shadows & golden lights
+    // [3. Teal & Orange] — Hollywood blockbuster grade, crisp cool shadows &
+    // golden lights
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.02f,
@@ -138,7 +140,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [4. Vibrant & Clear] — Bright, highly saturated, maximum tactical clarity with Khronos Neutral
+    // [4. Vibrant & Clear] — Bright, highly saturated, maximum tactical clarity
+    // with Khronos Neutral
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.04f,
@@ -164,7 +167,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [5. Clarity & Punch] — Crisp definition and dynamic punch with Uchimura GT clarity
+    // [5. Clarity & Punch] — Crisp definition and dynamic punch with Uchimura
+    // GT clarity
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.02f,
@@ -190,7 +194,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [6. Grimdark Battlefield] — Desaturated warzone ambiance with dense Lottes contrast
+    // [6. Grimdark Battlefield] — Desaturated warzone ambiance with dense
+    // Lottes contrast
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,
@@ -216,7 +221,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [7. Military (Bleach)] — Gritty metallic battlefield with Hable (Uncharted) film curve
+    // [7. Military (Bleach)] — Gritty metallic battlefield with Hable
+    // (Uncharted) film curve
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,
@@ -242,7 +248,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [8. Emerald Sci-Fi] — Cool emerald cyber atmosphere with AgX glowing shield protection
+    // [8. Emerald Sci-Fi] — Cool emerald cyber atmosphere with AgX glowing
+    // shield protection
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.02f,
@@ -268,7 +275,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [9. Cyberpunk Neon] — Vivid cyber-blue shadows, neon-magenta lights with AgX saturation
+    // [9. Cyberpunk Neon] — Vivid cyber-blue shadows, neon-magenta lights with
+    // AgX saturation
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,
@@ -294,7 +302,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.08f,
     },
 
-    // [10. Studio Cinema] — Multi-stage grading (ACES + S-curve + Technicolor + DPX)
+    // [10. Studio Cinema] — Multi-stage grading (ACES + S-curve + Technicolor +
+    // DPX)
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,
@@ -320,7 +329,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.15f,
     },
 
-    // [11. Technicolor 1960s] — Classic vintage 3-strip color film with analog Hable curve
+    // [11. Technicolor 1960s] — Classic vintage 3-strip color film with analog
+    // Hable curve
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,
@@ -346,7 +356,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [12. Kodak DPX Film] — Rich Kodak/Cineon scan density with Reinhard-Jodie luma rolloff
+    // [12. Kodak DPX Film] — Rich Kodak/Cineon scan density with Reinhard-Jodie
+    // luma rolloff
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.02f,
@@ -372,7 +383,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.45f,
     },
 
-    // [13. Warm Sunlight (Desert)] — Sun-drenched atmosphere with Hable film highlights
+    // [13. Warm Sunlight (Desert)] — Sun-drenched atmosphere with Hable film
+    // highlights
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,
@@ -398,7 +410,8 @@ inline constexpr std::array<PresetValues, 14> kPresets = {
         .dpx_film = 0.0f,
     },
 
-    // [14. Cool Arctic (Tundra)] — Crisp cool blue atmosphere with pure white Khronos Neutral snow
+    // [14. Cool Arctic (Tundra)] — Crisp cool blue atmosphere with pure white
+    // Khronos Neutral snow
     PresetValues{
         .fxaa_enabled = true,
         .brightness = 0.03f,

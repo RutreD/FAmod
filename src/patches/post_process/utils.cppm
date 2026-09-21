@@ -9,8 +9,7 @@ import std;
 
 namespace patch::post_process {
 
-template <typename T>
-class ComPtr {
+template <typename T> class ComPtr {
 public:
   constexpr ComPtr() noexcept = default;
   constexpr ComPtr(std::nullptr_t) noexcept : ptr_(nullptr) {}
@@ -23,13 +22,9 @@ public:
     }
   }
 
-  ComPtr(ComPtr &&other) noexcept : ptr_(other.ptr_) {
-    other.ptr_ = nullptr;
-  }
+  ComPtr(ComPtr &&other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
 
-  ~ComPtr() {
-    Reset();
-  }
+  ~ComPtr() { Reset(); }
 
   ComPtr &operator=(std::nullptr_t) noexcept {
     Reset();
@@ -84,7 +79,9 @@ public:
 
   [[nodiscard]] T *operator->() const noexcept { return ptr_; }
   [[nodiscard]] T &operator*() const noexcept { return *ptr_; }
-  [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+  [[nodiscard]] explicit operator bool() const noexcept {
+    return ptr_ != nullptr;
+  }
 
   [[nodiscard]] auto operator<=>(const ComPtr &) const = default;
 
@@ -126,9 +123,10 @@ private:
 };
 
 struct D3DCompiler {
-  using CompileFn = HRESULT(WINAPI *)(
-      LPCVOID, SIZE_T, LPCSTR, const D3D_SHADER_MACRO *, ID3DInclude *,
-      LPCSTR, LPCSTR, UINT, UINT, ID3DBlob **, ID3DBlob **);
+  using CompileFn = HRESULT(WINAPI *)(LPCVOID, SIZE_T, LPCSTR,
+                                      const D3D_SHADER_MACRO *, ID3DInclude *,
+                                      LPCSTR, LPCSTR, UINT, UINT, ID3DBlob **,
+                                      ID3DBlob **);
 
   [[nodiscard]] static CompileFn GetCompileFunction() noexcept {
     static const CompileFn fn = []() -> CompileFn {

@@ -77,11 +77,11 @@ void RenderPostProcessUi() {
   };
 
   // 2. Primary / Most Frequently Used Controls
-  ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s",
-                     tr("Map & Scene Lighting",
-                        {{Language::Russian, "Освещение и карта"},
-                         {Language::Chinese, "地图与场景光照"}})
-                         .c_str());
+  ImGui::TextColored(
+      ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s",
+      tr("Map & Scene Lighting", {{Language::Russian, "Освещение и карта"},
+                                  {Language::Chinese, "地图与场景光照"}})
+          .c_str());
 
   CustomSliderFloat(tr("Brightness", {{Language::Russian, "Яркость"},
                                       {Language::Chinese, "亮度"}}),
@@ -91,29 +91,27 @@ void RenderPostProcessUi() {
                                     {Language::Chinese, "对比度"}}),
                     &g_settings.contrast, 0.6f, 1.6f);
 
-  CustomSliderFloat(tr("S-Curve Contrast",
-                       {{Language::Russian, "S-кривая контраста"},
-                        {Language::Chinese, "S曲线对比度"}}),
-                    &g_settings.s_curve, 0.0f, 1.0f);
+  CustomSliderFloat(
+      tr("S-Curve Contrast", {{Language::Russian, "S-кривая контраста"},
+                              {Language::Chinese, "S曲线对比度"}}),
+      &g_settings.s_curve, 0.0f, 1.0f);
 
   CustomSliderFloat(
-      tr("Black Level",
-         {{Language::Russian, "Точка чёрного (Матовый чёрный)"},
-          {Language::Chinese, "黑电平（哑光黑）"}}),
+      tr("Black Level", {{Language::Russian, "Точка чёрного (Матовый чёрный)"},
+                         {Language::Chinese, "黑电平（哑光黑）"}}),
       &g_settings.black_level, -0.15f, 0.15f);
 
-  CustomSliderFloat(
-      tr("Vibrance", {{Language::Russian, "Сочность (Vibrance)"},
-                      {Language::Chinese, "自然饱和度"}}),
-      &g_settings.vibrance, -0.8f, 0.8f);
+  CustomSliderFloat(tr("Vibrance", {{Language::Russian, "Сочность (Vibrance)"},
+                                    {Language::Chinese, "自然饱和度"}}),
+                    &g_settings.vibrance, -0.8f, 0.8f);
 
   CustomSliderFloat(tr("Exposure", {{Language::Russian, "Экспозиция"},
                                     {Language::Chinese, "曝光"}}),
                     &g_settings.exposure, -1.0f, 1.0f);
 
-  CustomSliderFloat(tr("Gamma", {{Language::Russian, "Гамма"},
-                                 {Language::Chinese, "伽马"}}),
-                    &g_settings.gamma, 0.6f, 1.5f);
+  CustomSliderFloat(
+      tr("Gamma", {{Language::Russian, "Гамма"}, {Language::Chinese, "伽马"}}),
+      &g_settings.gamma, 0.6f, 1.5f);
 
   CustomSliderFloat(tr("Saturation", {{Language::Russian, "Насыщенность"},
                                       {Language::Chinese, "饱和度"}}),
@@ -128,16 +126,15 @@ void RenderPostProcessUi() {
                          {Language::Chinese, "清晰度与抗锯齿"}})
                          .c_str());
 
-  CustomCheckbox(
-      tr("FXAA (World Only)",
-         {{Language::Russian, "Сглаживание FXAA (только мир)"},
-          {Language::Chinese, "FXAA 抗锯齿（仅世界）"}}),
-      &g_settings.fxaa_enabled);
+  CustomCheckbox(tr("FXAA (World Only)",
+                    {{Language::Russian, "Сглаживание FXAA (только мир)"},
+                     {Language::Chinese, "FXAA 抗锯齿（仅世界）"}}),
+                 &g_settings.fxaa_enabled);
 
-  CustomSliderFloat(tr("AMD CAS Sharpness",
-                       {{Language::Russian, "Резкость (AMD CAS)"},
-                        {Language::Chinese, "AMD CAS 锐化"}}),
-                    &g_settings.sharpening, 0.0f, 1.2f);
+  CustomSliderFloat(
+      tr("AMD CAS Sharpness", {{Language::Russian, "Резкость (AMD CAS)"},
+                               {Language::Chinese, "AMD CAS 锐化"}}),
+      &g_settings.sharpening, 0.0f, 1.2f);
 
   ImGui::Separator();
 
@@ -148,17 +145,15 @@ void RenderPostProcessUi() {
                          {Language::Chinese, "氛围与电影效果"}})
                          .c_str());
 
-  CustomSliderFloat(
-      tr("Technicolor 3-Strip",
-         {{Language::Russian, "Плёнка Technicolor (Ретро-кино)"},
-          {Language::Chinese, "特艺七彩胶片效果"}}),
-      &g_settings.technicolor, 0.0f, 1.0f);
+  CustomSliderFloat(tr("Technicolor 3-Strip",
+                       {{Language::Russian, "Плёнка Technicolor (Ретро-кино)"},
+                        {Language::Chinese, "特艺七彩胶片效果"}}),
+                    &g_settings.technicolor, 0.0f, 1.0f);
 
-  CustomSliderFloat(
-      tr("Cineon DPX Film",
-         {{Language::Russian, "Плёночная плотность (Cineon DPX)"},
-          {Language::Chinese, "Cineon DPX 胶片扫描色彩"}}),
-      &g_settings.dpx_film, 0.0f, 1.0f);
+  CustomSliderFloat(tr("Cineon DPX Film",
+                       {{Language::Russian, "Плёночная плотность (Cineon DPX)"},
+                        {Language::Chinese, "Cineon DPX 胶片扫描色彩"}}),
+                    &g_settings.dpx_film, 0.0f, 1.0f);
 
   CustomSliderFloat(
       tr("Bleach Bypass",
@@ -176,17 +171,15 @@ void RenderPostProcessUi() {
                         {Language::Chinese, "胶片颗粒"}}),
       &g_settings.film_grain, 0.0f, 1.0f);
 
-  CustomSliderFloat(
-      tr("Color Temp",
-         {{Language::Russian, "Цветовая температура (Тепло/Холод)"},
-          {Language::Chinese, "色温 (冷/暖)"}}),
-      &g_settings.color_temp, -0.8f, 0.8f);
+  CustomSliderFloat(tr("Color Temp", {{Language::Russian,
+                                       "Цветовая температура (Тепло/Холод)"},
+                                      {Language::Chinese, "色温 (冷/暖)"}}),
+                    &g_settings.color_temp, -0.8f, 0.8f);
 
-  CustomSliderFloat(
-      tr("Color Tint",
-         {{Language::Russian, "Цветовой оттенок (Зелёный/Пурпурный)"},
-          {Language::Chinese, "色调 (绿/品红)"}}),
-      &g_settings.tint, -0.8f, 0.8f);
+  CustomSliderFloat(tr("Color Tint", {{Language::Russian,
+                                       "Цветовой оттенок (Зелёный/Пурпурный)"},
+                                      {Language::Chinese, "色调 (绿/品红)"}}),
+                    &g_settings.tint, -0.8f, 0.8f);
 
   constexpr auto kTonemapNames = std::to_array<const char *>({
       "None",
@@ -224,10 +217,10 @@ void RenderPostProcessUi() {
                                            {Language::Chinese, "阴影颜色"}}),
                        g_settings.shadow_tint);
 
-      CustomColorEdit3(tr("Highlights Tint",
-                          {{Language::Russian, "Цвет светов"},
-                           {Language::Chinese, "高光颜色"}}),
-                       g_settings.highlight_tint);
+      CustomColorEdit3(
+          tr("Highlights Tint", {{Language::Russian, "Цвет светов"},
+                                 {Language::Chinese, "高光颜色"}}),
+          g_settings.highlight_tint);
 
       CustomSliderFloat(
           tr("Balance", {{Language::Russian, "Баланс теней/светов"},

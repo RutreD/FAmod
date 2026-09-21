@@ -31,14 +31,18 @@ private:
   };
 
   struct alignas(16) ShaderConstants {
-    std::array<float, 4> scale_bias;      // c0: scale, bias, saturation, gamma
-    std::array<float, 4> color_temp_tint; // c1: temp_r, temp_g, temp_b, tonemap_mode
-    std::array<float, 4> effects;         // c2: sharpening, fxaa, vignette, grain
-    std::array<float, 4> screen_size;     // c3: 1/w, 1/h, w, h
-    std::array<float, 4> shadows;         // c4: shadow_r, shadow_g, shadow_b, split_intensity
-    std::array<float, 4> highlights;      // c5: highlight_r, highlight_g, highlight_b, split_balance
-    std::array<float, 4> extra;           // c6: vibrance, bleach_bypass, black_level, s_curve
-    std::array<float, 4> film;            // c7: technicolor, dpx_film, frame_seed, 0
+    std::array<float, 4> scale_bias; // c0: scale, bias, saturation, gamma
+    std::array<float, 4>
+        color_temp_tint;          // c1: temp_r, temp_g, temp_b, tonemap_mode
+    std::array<float, 4> effects; // c2: sharpening, fxaa, vignette, grain
+    std::array<float, 4> screen_size; // c3: 1/w, 1/h, w, h
+    std::array<float, 4>
+        shadows; // c4: shadow_r, shadow_g, shadow_b, split_intensity
+    std::array<float, 4>
+        highlights; // c5: highlight_r, highlight_g, highlight_b, split_balance
+    std::array<float, 4>
+        extra; // c6: vibrance, bleach_bypass, black_level, s_curve
+    std::array<float, 4> film; // c7: technicolor, dpx_film, frame_seed, 0
 
     [[nodiscard]] static ShaderConstants
     FromSettings(const Settings &s, float width, float height,
@@ -52,9 +56,9 @@ private:
 
       return ShaderConstants{
           .scale_bias = {scale, bias, s.saturation, s.gamma},
-          .color_temp_tint =
-              {temp_r, temp_g, temp_b,
-               static_cast<float>(std::to_underlying(s.tonemap_mode))},
+          .color_temp_tint = {temp_r, temp_g, temp_b,
+                              static_cast<float>(
+                                  std::to_underlying(s.tonemap_mode))},
           .effects = {s.sharpening, s.fxaa_enabled ? 1.0f : 0.0f,
                       s.vignette_intensity, s.film_grain},
           .screen_size = {1.0f / width, 1.0f / height, width, height},
@@ -92,10 +96,11 @@ private:
 
     ComPtr<ID3DBlob> code_blob;
     ComPtr<ID3DBlob> error_blob;
-    const HRESULT hr = d3d_compile(
-        kShaderSource.data(), kShaderSource.size(), nullptr, nullptr, nullptr,
-        "main", "ps_3_0", D3DCOMPILE_OPTIMIZATION_LEVEL3, 0,
-        code_blob.ReleaseAndGetAddressOf(), error_blob.ReleaseAndGetAddressOf());
+    const HRESULT hr = d3d_compile(kShaderSource.data(), kShaderSource.size(),
+                                   nullptr, nullptr, nullptr, "main", "ps_3_0",
+                                   D3DCOMPILE_OPTIMIZATION_LEVEL3, 0,
+                                   code_blob.ReleaseAndGetAddressOf(),
+                                   error_blob.ReleaseAndGetAddressOf());
 
     if (FAILED(hr) || !code_blob) {
       shader_compilation_failed_ = true;
@@ -189,7 +194,8 @@ private:
     };
     device->SetViewport(&vp);
 
-    // Disable programmable vertex shader so FVF (XYZRHW) fixed-function path is used
+    // Disable programmable vertex shader so FVF (XYZRHW) fixed-function path is
+    // used
     device->SetVertexShader(nullptr);
 
     device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
@@ -214,7 +220,6 @@ private:
                                D3DCOLORWRITEENABLE_BLUE |
                                D3DCOLORWRITEENABLE_ALPHA);
     device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
-
   }
 
 public:
@@ -265,10 +270,11 @@ public:
     // 1. Capture entire D3D9 pipeline state BEFORE any modifications
     state_block_->Capture();
 
-    // 3. Copy 3D world render output into the intermediate texture (fast GPU blit)
+    // 3. Copy 3D world render output into the intermediate texture (fast GPU
+    // blit)
     if (FAILED(device->StretchRect(backbuffer.Get(), nullptr,
-                                  intermediate_surface_.Get(), nullptr,
-                                  D3DTEXF_NONE))) {
+                                   intermediate_surface_.Get(), nullptr,
+                                   D3DTEXF_NONE))) {
       state_block_->Apply();
       return;
     }
@@ -279,8 +285,7 @@ public:
     // 5. Precompute linear math on CPU & pack into constant buffer
     const auto constants = ShaderConstants::FromSettings(
         g_settings, static_cast<float>(desc.Width),
-        static_cast<float>(desc.Height),
-        static_cast<float>(frame_count_++));
+        static_cast<float>(desc.Height), static_cast<float>(frame_count_++));
 
     device->SetPixelShader(pixel_shader_.Get());
     device->SetPixelShaderConstantF(0, constants.data(),

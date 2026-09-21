@@ -44,12 +44,13 @@ struct PatchRefractingEffectsCall : public Xbyak::CodeGenerator {
 } // namespace patch::post_process
 
 void PostProcessPatch::Apply() {
-  ImGuiHook::OnReset += [] {
-    patch::post_process::PostProcessRenderer::Instance().OnReset();
-  };
+  ImGuiHook::OnReset +=
+      [] { patch::post_process::PostProcessRenderer::Instance().OnReset(); };
 
-  static patch::post_process::PostProcessHookStub hook_stub(&patch::post_process::OnBeforeRenderUI);
-  patch::post_process::PatchRefractingEffectsCall patch_call(hook_stub.getCode<const void *>());
+  static patch::post_process::PostProcessHookStub hook_stub(
+      &patch::post_process::OnBeforeRenderUI);
+  patch::post_process::PatchRefractingEffectsCall patch_call(
+      hook_stub.getCode<const void *>());
 }
 
 void PostProcessPatch::RenderUi() {

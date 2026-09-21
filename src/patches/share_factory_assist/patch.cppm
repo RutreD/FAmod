@@ -32,7 +32,8 @@ public:
           "произведёнными юнитами."},
          {Language::Chinese,
           "允许工厂为其生产的单位下达协助指令（目标或地面集结点）。"
-          "对另一座工厂的首个指令将复制其建造队列，通过 Shift 添加则让生产出的单位协助该工厂。"}});
+          "对另一座工厂的首个指令将复制其建造队列，通过 Shift "
+          "添加则让生产出的单位协助该工厂。"}});
   }
 
   void Apply() override;
@@ -54,7 +55,8 @@ struct EngineThunks : public Xbyak::CodeGenerator {
                                          const SSTICommandIssueData *cmd,
                                          bool clear_queue);
 
-  using LookupEntityFn = UserEntity *(__cdecl *)(void *session, uint32_t ent_id);
+  using LookupEntityFn = UserEntity *(__cdecl *)(void *session,
+                                                 uint32_t ent_id);
 
   WeakSetCtorFn ws_ctor{nullptr};
   WeakSetDtorFn ws_dtor{nullptr};
@@ -68,17 +70,14 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     ws_ctor = getCurr<WeakSetCtorFn>();
     push(esi);
     mov(esi, dword[esp + 8]);
-    mov(eax, 0x007AE180);
-    call(eax);
+    call(reinterpret_cast<const void *>(0x007AE180));
     pop(esi);
     ret();
 
     // 2. WeakSet destructor (0x007ABDE0: eax = this)
     ws_dtor = getCurr<WeakSetDtorFn>();
     mov(eax, dword[esp + 4]);
-    mov(ecx, 0x007ABDE0);
-    call(ecx);
-    ret();
+    jmp(reinterpret_cast<const void *>(0x007ABDE0));
 
     // 3. Caller for Moho::ISSUE_FactoryCommand (0x008B0B30: ebx = factories)
     issue_factory = getCurr<IssueCommandFn>();
@@ -86,19 +85,19 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     mov(ebx, dword[esp + 8]);
     movzx(eax, byte[esp + 16]); // clean clear_queue bool
     push(eax);
-    push(dword[esp + 16]);      // cmd
-    mov(eax, 0x008B0B30);
-    call(eax);
+    push(dword[esp + 16]); // cmd
+    call(reinterpret_cast<const void *>(0x008B0B30));
     add(esp, 8);
     pop(ebx);
     ret();
 
     // 4. Hook bridge for Moho::ISSUE_Command -> OnIssueCommand
     issue_bridge = getCurr<const void *>();
-    movzx(eax, byte[esp + 8]); // clean clear_queue bool (engine callers only set cl)
+    movzx(eax,
+          byte[esp + 8]); // clean clear_queue bool (engine callers only set cl)
     push(eax);
-    push(dword[esp + 8]);      // cmd
-    push(ebx);                 // units
+    push(dword[esp + 8]); // cmd
+    push(ebx);            // units
     call(reinterpret_cast<const void *>(OnIssueCommand));
     ret();
 
@@ -109,7 +108,7 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     mov(ebx, dword[esp + 8]);
     movzx(eax, byte[esp + 16]); // clean clear_queue bool
     push(eax);
-    push(dword[esp + 16]);      // cmd
+    push(dword[esp + 16]); // cmd
     call(l_orig_prologue);
     add(esp, 8);
     pop(ebx);
@@ -120,13 +119,13 @@ struct EngineThunks : public Xbyak::CodeGenerator {
     push(0x00BB3958);
     jmp(reinterpret_cast<const void *>(0x008B05E7));
 
-    // 6. Caller for Moho::CWldSession::LookupEntityId (0x00894280: esi = session, push ent_id)
+    // 6. Caller for Moho::CWldSession::LookupEntityId (0x00894280: esi =
+    // session, push ent_id)
     lookup_entity = getCurr<LookupEntityFn>();
     push(esi);
     mov(esi, dword[esp + 8]); // session
     push(dword[esp + 12]);    // ent_id
-    mov(eax, 0x00894280);
-    call(eax);
+    call(reinterpret_cast<const void *>(0x00894280));
     pop(esi);
     ret();
   }
@@ -253,8 +252,8 @@ void __stdcall OnIssueCommand(WeakSet<UserEntity> *units,
     return;
   }
 
-  // Factory-on-factory assist with clear_queue (first command, overwriting queue):
-  // preserve default behavior (copies build queue).
+  // Factory-on-factory assist with clear_queue (first command, overwriting
+  // queue): preserve default behavior (copies build queue).
   if (clear_queue && IsTargetFactory(cmd)) {
     EngineThunks::Instance().issue_cmd_orig(units, cmd, clear_queue);
     return;

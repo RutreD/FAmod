@@ -4,6 +4,7 @@ build/
 .xmake/
 .cache/
 .vscode/
+external/
 
 # Compiled binaries and intermediate artifacts
 *.obj
