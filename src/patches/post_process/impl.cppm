@@ -59,9 +59,9 @@ void PostProcessPatch::RenderUi() {
 
 void PostProcessPatch::BindSettings(SettingsBinder &b) {
   using namespace patch::post_process;
-  b.Bind("PostProcess.enabled", g_settings.enabled, true);
+  b.Bind("PostProcess.enabled", g_settings.enabled, false);
   b.Bind("PostProcess.preset", g_settings.preset, Preset::Default);
-  b.Bind("PostProcess.fxaaEnabled", g_settings.fxaa_enabled, true);
+  b.Bind("PostProcess.fxaaEnabled", g_settings.fxaa_enabled, false);
   b.Bind("PostProcess.brightness", g_settings.brightness, 0.0f);
   b.Bind("PostProcess.contrast", g_settings.contrast, 1.0f);
   b.Bind("PostProcess.saturation", g_settings.saturation, 1.0f);
