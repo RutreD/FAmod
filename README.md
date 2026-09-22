@@ -125,7 +125,17 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ---
 
+### 9. 🔍 Reclaim Prop Selection Zoom
+* **What it does**: Allows customizing the camera zoom distance threshold (default `150`, adjustable up to `999`) for selecting and issuing reclaim orders on props (trees, rocks, wreckage). Can affect framerate.
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
+
+<details>
+<summary><b>Does FAmod cause desyncs in multiplayer games?</b></summary>
+No, currently FAmod does not cause desyncs. All included features (tactical range rings, UI overlays, camera zoom thresholds for prop selection, world post-processing shaders, and performance optimizations) operate strictly on the client/UI level without altering the shared deterministic Sim simulation.
+</details>
 
 <details>
 <summary><b>Why should I trust FAmod? / Is this safe? / My antivirus flagged dsound.dll</b></summary>

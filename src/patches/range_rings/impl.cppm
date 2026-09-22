@@ -24,7 +24,7 @@ void RangeRingsPatch::BindSettings(SettingsBinder &b) {
   b.Bind("RangeRings.smd_color", patch::range_rings::smd_color_,
          std::array<float, 4>{0.0f, 0.0f, 1.0f, 0.6f});
   b.Bind("RangeRings.capture_enabled", patch::range_rings::capture_enabled_,
-         true);
+         false);
   b.Bind("RangeRings.capture_color", patch::range_rings::capture_color_,
          std::array<float, 4>{0.0f, 1.0f, 1.0f, 0.5f});
 }

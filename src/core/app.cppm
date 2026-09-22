@@ -17,6 +17,7 @@ import patch.health_bars;
 import patch.share_factory_assist;
 import patch.post_process;
 import patch.replay_desync;
+import patch.reclaim_zoom;
 
 export namespace core::app {
 
@@ -36,6 +37,7 @@ void Initialize() {
   registry.RegisterPatch<ShareFactoryAssistPatch>();
   registry.RegisterPatch<PostProcessPatch>();
   registry.RegisterPatch<ReplayDesyncPatch>();
+  registry.RegisterPatch<ReclaimZoomPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();

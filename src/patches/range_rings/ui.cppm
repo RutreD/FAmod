@@ -135,10 +135,25 @@ void RenderRangeRingsUi() {
     ImGui::SetItemTooltip(
         "%s",
         tr("Color changes take effect upon starting a new match / reloading "
-           "the game.",
+           "the game.\n\n"
+           "Note on Alpha channel: In the game's shader, alpha controls the "
+           "intensity "
+           "of the Bloom/Glow effect around the ring rather than transparency. "
+           "If Bloom is disabled in graphics settings, changing alpha has no "
+           "visible effect.",
            {{Language::Russian, "Изменение цвета вступит в силу в следующем "
-                                "матче / при следующей загрузке игры."},
-            {Language::Chinese, "颜色更改将在下一局比赛/重新加载游戏时生效。"}})
+                                "матче / при следующей загрузке игры.\n\n"
+                                "Примечание об альфа-канале: в шейдере игры "
+                                "альфа регулирует силу свечения (Bloom/Glow) "
+                                "вокруг кольца, а не прозрачность. Если "
+                                "свечение выключено в настройках графики, "
+                                "альфа-канал визуально ни на что не влияет."},
+            {Language::Chinese,
+             "颜色更改将在下一局比赛/重新加载游戏时生效。\n\n"
+             "关于透明度（Alpha）：在游戏着色器中，Alpha控制的是光晕/"
+             "泛光（Bloom/Glow）强度，"
+             "而非透明度。如果画面设置中禁用了泛光，调整Alpha不会有明显效果"
+             "。"}})
             .c_str());
 
     ImGui::Unindent();
@@ -172,10 +187,25 @@ void RenderRangeRingsUi() {
     ImGui::SetItemTooltip(
         "%s",
         tr("Color changes take effect upon starting a new match / reloading "
-           "the game.",
+           "the game.\n\n"
+           "Note on Alpha channel: In the game's shader, alpha controls the "
+           "intensity "
+           "of the Bloom/Glow effect around the ring rather than transparency. "
+           "If Bloom is disabled in graphics settings, changing alpha has no "
+           "visible effect.",
            {{Language::Russian, "Изменение цвета вступит в силу в следующем "
-                                "матче / при следующей загрузке игры."},
-            {Language::Chinese, "颜色更改将在下一局比赛/重新加载游戏时生效。"}})
+                                "матче / при следующей загрузке игры.\n\n"
+                                "Примечание об альфа-канале: в шейдере игры "
+                                "альфа регулирует силу свечения (Bloom/Glow) "
+                                "вокруг кольца, а не прозрачность. Если "
+                                "свечение выключено в настройках графики, "
+                                "альфа-канал визуально ни на что не влияет."},
+            {Language::Chinese,
+             "颜色更改将在下一局比赛/重新加载游戏时生效。\n\n"
+             "关于透明度（Alpha）：在游戏着色器中，Alpha控制的是光晕/"
+             "泛光（Bloom/Glow）强度，"
+             "而非透明度。如果画面设置中禁用了泛光，调整Alpha不会有明显效果"
+             "。"}})
             .c_str());
     ImGui::Unindent();
   }

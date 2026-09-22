@@ -62,11 +62,12 @@ void ApplyCapture() {
   fa::RangeExtractor::Register<CaptureExtractor>("Capture");
 
   // 2. Subscribe to VFS memory map event to inject overlay definition
-  core::events::OnMemoryMapFile += [](fa::ConstMemBuffer *buffer,
-                                      const char *fname) {
-    if (fname && std::string_view(fname).ends_with("rangeoverlayparams.lua")) {
-      const auto hex = ToFaColorHex(capture_color_);
-      buffer->append(std::format(R"(
+  core::events::OnMemoryMapFile +=
+      [](fa::ConstMemBuffer *buffer, const char *fname) {
+        if (fname && std::string_view(fname).ends_with(
+                         "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
+          const auto hex = ToFaColorHex(capture_color_);
+          buffer->append(std::format(R"(
         if RangeOverlayParams.Capture == nil then
           RangeOverlayParams.Capture = {{
               key = 'capture',
@@ -82,9 +83,9 @@ void ApplyCapture() {
           }}
         end
       )",
-                                 hex));
-    }
-  };
+                                     hex));
+        }
+      };
 }
 
 } // namespace patch::range_rings
