@@ -89,8 +89,8 @@ void ApplyStrategicDefense() {
   // 2. Subscribe to VFS memory map event to inject overlay definition
   core::events::OnMemoryMapFile +=
       [](fa::ConstMemBuffer *buffer, const char *fname) {
-        if (fname && std::string_view(fname).ends_with(
-                         "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
+        if (std::string_view(fname).ends_with(
+            "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
           const auto hex = ToFaColorHex(smd_color_);
           buffer->append(std::format(R"(
         if RangeOverlayParams.StrategicDefense == nil then

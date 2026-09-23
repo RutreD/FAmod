@@ -86,8 +86,8 @@ void ReclaimZoomPatch::Apply() {
 
   core::events::OnMemoryMapFile +=
       [](fa::ConstMemBuffer *buffer, const char *fname) {
-        if (fname && std::string_view(fname).ends_with(
-                         "\\lua\\ui\\controls\\worldview.lua")) {
+        if (std::string_view(fname).ends_with(
+            "\\lua\\ui\\controls\\worldview.lua")) {
           buffer->append(R"(
     WorldView.CanIssueReclaimOrders = function(self)
         if not self.Camera then

@@ -64,8 +64,8 @@ void ApplyCapture() {
   // 2. Subscribe to VFS memory map event to inject overlay definition
   core::events::OnMemoryMapFile +=
       [](fa::ConstMemBuffer *buffer, const char *fname) {
-        if (fname && std::string_view(fname).ends_with(
-                         "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
+        if (std::string_view(fname).ends_with(
+            "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
           const auto hex = ToFaColorHex(capture_color_);
           buffer->append(std::format(R"(
         if RangeOverlayParams.Capture == nil then
