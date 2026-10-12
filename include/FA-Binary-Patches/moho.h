@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef FA_MODULE_IMPORT
+#error "Do not include moho.h directly. Use 'import fa;' instead."
+#endif
+
 #include "global.h"
 #include "LuaAPI.h"
 #include "Wm3.h"
@@ -228,28 +232,46 @@ enum ERuleBPUnitCommandCaps : __int32
 
 enum EUnitCommandType : __int32
 {
-	UNITCOMMAND_None = -1,
+	UNITCOMMAND_None = 0,
 	UNITCOMMAND_Stop = 1,
 	UNITCOMMAND_Move = 2,
-	UNITCOMMAND_Attack = 0x0A,
-	UNITCOMMAND_Guard = 0x0F,
+	UNITCOMMAND_Dive = 3,
+	UNITCOMMAND_FormMove = 4,
+	UNITCOMMAND_BuildSiloTactical = 5,
+	UNITCOMMAND_BuildSiloNuke = 6,
+	UNITCOMMAND_BuildFactory = 7,
+	UNITCOMMAND_BuildMobile = 8,
+	UNITCOMMAND_BuildAssist = 9,
+	UNITCOMMAND_Attack = 0xA,
+	UNITCOMMAND_FormAttack = 0xB,
+	UNITCOMMAND_Nuke = 0xC,
+	UNITCOMMAND_Tactical = 0xD,
+	UNITCOMMAND_Teleport = 0xE,
+	UNITCOMMAND_Guard = 0xF,
 	UNITCOMMAND_Patrol = 0x10,
+	UNITCOMMAND_Ferry = 0x11,
+	UNITCOMMAND_FormPatrol = 0x12,
+	UNITCOMMAND_Reclaim = 0x13,
 	UNITCOMMAND_Repair = 0x14,
 	UNITCOMMAND_Capture = 0x15,
-	UNITCOMMAND_TransportUnloadUnits = 0x16,
-	UNITCOMMAND_TransportLoadUnits = 0x17,
-	UNITCOMMAND_Nuke = 0x18,
-	UNITCOMMAND_Tactical = 0x19,
-	UNITCOMMAND_Teleport = 0x1A,
-	UNITCOMMAND_Ferry = 0x1B,
-	UNITCOMMAND_BuildSiloTactical = 0x1C,
-	UNITCOMMAND_BuildSiloNuke = 0x1D,
-	UNITCOMMAND_Sacrifice = 0x1E,
-	UNITCOMMAND_Pause = 0x1F,
-	UNITCOMMAND_OverCharge = 0x20,
-	UNITCOMMAND_Dive = 0x21,
-	UNITCOMMAND_Reclaim = 0x22,
-	UNITCOMMAND_SpecialAction = 0x23,
+	UNITCOMMAND_TransportLoadUnits = 0x16,
+	UNITCOMMAND_TransportReverseLoadUnits = 0x17,
+	UNITCOMMAND_TransportUnloadUnits = 0x18,
+	UNITCOMMAND_TransportUnloadSpecificUnits = 0x19,
+	UNITCOMMAND_DetachFromTransport = 0x1A,
+	UNITCOMMAND_Upgrade = 0x1B,
+	UNITCOMMAND_Script = 0x1C,
+	UNITCOMMAND_AssistCommander = 0x1D,
+	UNITCOMMAND_KillSelf = 0x1E,
+	UNITCOMMAND_DestroySelf = 0x1F,
+	UNITCOMMAND_Sacrifice = 0x20,
+	UNITCOMMAND_Pause = 0x21,
+	UNITCOMMAND_OverCharge = 0x22,
+	UNITCOMMAND_AggressiveMove = 0x23,
+	UNITCOMMAND_FormAggressiveMove = 0x24,
+	UNITCOMMAND_AssistMove = 0x25,
+	UNITCOMMAND_SpecialAction = 0x26,
+	UNITCOMMAND_Dock = 0x27,
 };
 
 struct SSTITarget
@@ -260,62 +282,269 @@ struct SSTITarget
 };
 VALIDATE_SIZE(SSTITarget, 20);
 
+struct WeakObject;
+template<class T> struct WeakPtr;
+struct UserEntity;
+
+struct WeakObject
+{
+	WeakPtr<void> *mNextUse;
+};
+
+template<class T>
+struct WeakPtr
+{
+	WeakObject *mObj;
+	WeakPtr<T> *mNext;
+
+	operator T*() const noexcept {
+		return this->get();
+	}
+	T &operator*() const noexcept {
+		return *this->get();
+	}
+	T *operator->() const noexcept {
+		return this->get();
+	}
+	T *get() const noexcept {
+		return reinterpret_cast<T *>(this->mObj);
+	}
+	T *GetObjectPtr() const noexcept {
+		return reinterpret_cast<T *>(this->mObj);
+	}
+};
+
 struct UICursorInfo
 {
-	int mType;
-	Vector3f mPos;
-	EntId mEnt;
-	unk_t unk[4];
+	uint32_t mHitValid;              // +0x00
+	Vector3f mPos;                   // +0x04
+	WeakPtr<UserEntity> mUnitHover;  // +0x10
+	CmdId mIsDragger;                // +0x18
+	Vector2f mMouseScreenPos;        // +0x1C
+
+	[[nodiscard]] UserEntity *HoveredEntity() const noexcept {
+		return mUnitHover.GetObjectPtr();
+	}
 };
 VALIDATE_SIZE(UICursorInfo, 36);
 
+enum ECommandMode : int32_t
+{
+	COMMOD_None = 0,
+	COMMOD_Order = 1,
+	COMMOD_Build = 2,
+	COMMOD_BuildAnchored = 3,
+	COMMOD_Move = 4,
+	COMMOD_Reclaim = 5,
+	COMMOD_Ping = 6,
+	COMMOD_CancelCommandMode = 7,
+};
+
 struct SCommandModeData
 {
-	int mMode;
-	ERuleBPUnitCommandCaps mCommandCaps;
-	RUnitBlueprint *mBlueprint;
+	ECommandMode mMode{COMMOD_None};
+	ERuleBPUnitCommandCaps mCommandCaps{static_cast<ERuleBPUnitCommandCaps>(0)};
+	RBlueprint *mBlueprint{nullptr};
 	UICursorInfo mMouseDragStart;
 	UICursorInfo mMouseDragEnd;
-	int mModifiers;
-	int mIsDragged;
-	int dword5C;
+	int32_t mModifiers{0};
+	int32_t mIsDragged{-1};
+	int32_t dword5C{-1};
+
+	[[nodiscard]] bool HasDraggedCommand() const noexcept {
+		return (static_cast<uint32_t>(mIsDragged) & 0xFF000000u) != 0xFF000000u;
+	}
 };
-VALIDATE_SIZE(SCommandModeData, 96);
+VALIDATE_SIZE(SCommandModeData, 0x60);
+VALIDATE_OFFSET(SCommandModeData, mBlueprint, 0x08);
+VALIDATE_OFFSET(SCommandModeData, mMouseDragStart, 0x0C);
+VALIDATE_OFFSET(SCommandModeData, mMouseDragEnd, 0x30);
+VALIDATE_OFFSET(SCommandModeData, mModifiers, 0x54);
+VALIDATE_OFFSET(SCommandModeData, mIsDragged, 0x58);
 
 template<class T>
 struct WeakSet
 {
-	void *mAlloc;
-	void *mHead;
-	uint32_t mSize;
+	void *mAlloc{nullptr};
+	void *mHead{nullptr};
+	uint32_t mSize{0};
+
+	WeakSet();
+	~WeakSet();
+
+	WeakSet(const WeakSet &) = delete;
+	WeakSet &operator=(const WeakSet &) = delete;
+
+	WeakSet(WeakSet &&other) noexcept
+		: mAlloc(other.mAlloc), mHead(other.mHead), mSize(other.mSize) {
+		other.mAlloc = nullptr;
+		other.mHead = nullptr;
+		other.mSize = 0;
+	}
+
+	WeakSet &operator=(WeakSet &&other) noexcept {
+		if (this != &other) {
+			this->~WeakSet();
+			mAlloc = other.mAlloc;
+			mHead = other.mHead;
+			mSize = other.mSize;
+			other.mAlloc = nullptr;
+			other.mHead = nullptr;
+			other.mSize = 0;
+		}
+		return *this;
+	}
 
 	[[nodiscard]] size_t Size() const noexcept { return mSize; }
 	[[nodiscard]] bool Empty() const noexcept { return mSize == 0; }
+
+	[[nodiscard]] bool Contains(const T *entity) const noexcept {
+		if (!entity || !mHead || mSize == 0) {
+			return false;
+		}
+		// Red-black tree node layout matching MSVC 8 (faf-re SSelectionNodeUserEntity)
+		struct Node {
+			Node *left;
+			Node *parent;
+			Node *right;
+			uint32_t key;
+			void *ownerLinkSlot;
+			void *nextOwner;
+			uint8_t color;
+			uint8_t isSentinel;
+			uint8_t pad[2];
+		};
+		static_assert(sizeof(Node) == 0x1C, "Node size must be 0x1C");
+		static_assert(offsetof(Node, key) == 0x0C, "Node key offset must be 0x0C");
+		static_assert(offsetof(Node, isSentinel) == 0x19, "Node isSentinel offset must be 0x19");
+
+		const auto *head = reinterpret_cast<const Node *>(mHead);
+		const Node *curr = head->parent; // root
+		const uint32_t target_key = reinterpret_cast<uintptr_t>(entity);
+		while (curr && !curr->isSentinel) {
+			if (target_key < curr->key) {
+				curr = curr->left;
+			} else if (curr->key < target_key) {
+				curr = curr->right;
+			} else {
+				return true;
+			}
+		}
+		return false;
+	}
 };
 VALIDATE_SIZE(WeakSet<UserEntity>, 12);
 
+template <typename T>
+struct IntrusiveLink {
+	T prev{nullptr};
+	T next{nullptr};
+};
+VALIDATE_SIZE(IntrusiveLink<void*>, 0x08);
+
+struct SSelectionSetUserEntity : WeakSet<UserEntity> {
+	uint32_t mSizeMirrorOrUnused{0}; // +0x0C
+};
+VALIDATE_SIZE(SSelectionSetUserEntity, 0x10);
+struct SOCellPos {
+	int16_t x;
+	int16_t z;
+};
+static_assert(sizeof(SOCellPos) == 4, "SOCellPos size must be 4");
+
+struct SOCellPosFastVector2 {
+	SOCellPos *start_{nullptr};
+	SOCellPos *end_{nullptr};
+	SOCellPos *capacity_{nullptr};
+	SOCellPos *originalVec_{nullptr};
+	SOCellPos inlineVec_[2]{};
+};
+static_assert(sizeof(SOCellPosFastVector2) == 0x18, "SOCellPosFastVector2 size must be 0x18");
+
+struct LuaObjectDummy {
+	void *m_next{nullptr};
+	void **m_prev{nullptr};
+	void *m_state{nullptr};
+	int32_t m_tt{0};
+	uint32_t m_value{0};
+};
+static_assert(sizeof(LuaObjectDummy) == 0x14, "LuaObjectDummy size must be 0x14");
+
 struct SSTICommandIssueData
 {
-	int mNextCmdId;
-	int unk1;
-	int mIndex;
-	EUnitCommandType mCommandType;
-	SSTITarget mTarget;
-	SSTITarget unk2;
-	Vector3f mMaybeOriArgs;
-	Quaternionf mOri;
-	int gap;
-	uint8_t mCells[24];
-	int unk3;
-	int unk4;
-	uint8_t mLObj[20];
-	void *mLuaState;
-	CUnitCommand *mUnitCommand;
-	CUnitCommandQueue *mQueue;
+	int32_t nextCommandId{-1};                         // +0x00
+	int32_t unk04{-1};                                 // +0x04
+	int32_t mIndex{-1};                                // +0x08
+	EUnitCommandType mCommandType{UNITCOMMAND_None};   // +0x0C
+	SSTITarget mTarget{AITARGET_None, 0xF0000000u, {0.0f, 0.0f, 0.0f}};  // +0x10
+	SSTITarget mTarget2{AITARGET_None, 0xF0000000u, {0.0f, 0.0f, 0.0f}}; // +0x24
+	int32_t unk38{-1};                                 // +0x38
+	Quaternionf mOri{1.0f, 0.0f, 0.0f, 0.0f};          // +0x3C
+	float unk4C{1.0f};                                 // +0x4C
+	RBlueprint *mBlueprint{nullptr};                   // +0x50
+	int32_t unk54{0};                                  // +0x54
+	SOCellPosFastVector2 mCells{};                     // +0x58..+0x70
+	int32_t unk70{1};                                  // +0x70
+	int32_t unk74{1};                                  // +0x74
+	LuaObjectDummy mObject{};                          // +0x78..+0x8C
+	void *mLuaState{nullptr};                          // +0x8C
+	CUnitCommand *mUnitCommand{nullptr};               // +0x90
+	CUnitCommandQueue *mQueue{nullptr};                // +0x94
+
+	inline explicit SSTICommandIssueData(EUnitCommandType cmd_type = UNITCOMMAND_None)
+	    : nextCommandId(-1),
+	      unk04(-1),
+	      mIndex(-1),
+	      mCommandType(cmd_type),
+	      mTarget{AITARGET_None, 0xF0000000u, {0.0f, 0.0f, 0.0f}},
+	      mTarget2{AITARGET_None, 0xF0000000u, {0.0f, 0.0f, 0.0f}},
+	      unk38(-1),
+	      mOri{1.0f, 0.0f, 0.0f, 0.0f},
+	      unk4C(1.0f),
+	      mBlueprint(nullptr),
+	      unk54(0),
+	      mCells{},
+	      unk70(1),
+	      unk74(1),
+	      mObject{},
+	      mLuaState(nullptr),
+	      mUnitCommand(nullptr),
+	      mQueue(nullptr) {
+		mCells.start_ = mCells.inlineVec_;
+		mCells.end_ = mCells.inlineVec_;
+		mCells.capacity_ = mCells.inlineVec_ + 2;
+		mCells.originalVec_ = mCells.inlineVec_;
+	}
+
+	inline ~SSTICommandIssueData() {
+		if (mCells.start_ && mCells.start_ != mCells.originalVec_) {
+			reinterpret_cast<void(__cdecl *)(void *)>(0x00A82542)(mCells.start_);
+		}
+	}
+
+	SSTICommandIssueData(const SSTICommandIssueData &) = delete;
+	SSTICommandIssueData &operator=(const SSTICommandIssueData &) = delete;
+	SSTICommandIssueData(SSTICommandIssueData &&) = delete;
+	SSTICommandIssueData &operator=(SSTICommandIssueData &&) = delete;
 };
-VALIDATE_SIZE(SSTICommandIssueData, 152);
-VALIDATE_OFFSET(SSTICommandIssueData, mCommandType, 0x0C);
-VALIDATE_OFFSET(SSTICommandIssueData, mTarget, 0x10);
+static_assert(sizeof(SSTICommandIssueData) == 0x98, "SSTICommandIssueData size must be 0x98");
+static_assert(offsetof(SSTICommandIssueData, nextCommandId) == 0x00, "offset 0x00");
+static_assert(offsetof(SSTICommandIssueData, mIndex) == 0x08, "offset 0x08");
+static_assert(offsetof(SSTICommandIssueData, mCommandType) == 0x0C, "offset 0x0C");
+static_assert(offsetof(SSTICommandIssueData, mTarget) == 0x10, "offset 0x10");
+static_assert(offsetof(SSTICommandIssueData, mTarget2) == 0x24, "offset 0x24");
+static_assert(offsetof(SSTICommandIssueData, unk38) == 0x38, "offset 0x38");
+static_assert(offsetof(SSTICommandIssueData, mOri) == 0x3C, "offset 0x3C");
+static_assert(offsetof(SSTICommandIssueData, unk4C) == 0x4C, "offset 0x4C");
+static_assert(offsetof(SSTICommandIssueData, mBlueprint) == 0x50, "offset 0x50");
+static_assert(offsetof(SSTICommandIssueData, unk54) == 0x54, "offset 0x54");
+static_assert(offsetof(SSTICommandIssueData, mCells) == 0x58, "offset 0x58");
+static_assert(offsetof(SSTICommandIssueData, unk70) == 0x70, "offset 0x70");
+static_assert(offsetof(SSTICommandIssueData, unk74) == 0x74, "offset 0x74");
+static_assert(offsetof(SSTICommandIssueData, mObject) == 0x78, "offset 0x78");
+static_assert(offsetof(SSTICommandIssueData, mLuaState) == 0x8C, "offset 0x8C");
+static_assert(offsetof(SSTICommandIssueData, mUnitCommand) == 0x90, "offset 0x90");
+static_assert(offsetof(SSTICommandIssueData, mQueue) == 0x94, "offset 0x94");
 
 
 
@@ -636,35 +865,7 @@ VALIDATE_OFFSET(ConstMemBuffer, mData, 0x0);
 VALIDATE_OFFSET(ConstMemBuffer, mBegin, 0x8);
 VALIDATE_OFFSET(ConstMemBuffer, mEnd, 0xC);
 
-// T extends WeakObject
-template<class T>
-struct WeakPtr
-{
-	WeakObject *mObj;
-	WeakPtr<T> *mNext;
 
-	operator T*() {
-		return this->get();
-	}
-	T &operator*() {
-		return *this->get();
-	}
-	T *operator->() {
-		return this->get();
-	}
-	T *get() {
-		// this couldn't have been how it was done; since Moho::Unit inherits
-		// Moho::WeakObject from both Moho::IUnit and Moho::Entity, it becomes
-		// ambiguous and I've had to change all `WeakPtr<Unit>` to
-		// `WeakPtr<IUnit>`
-		return static_cast<T *>(this->mObj);
-	}
-};
-
-struct WeakObject
-{
-	WeakPtr<void> *mNextUse;
-};
 
 template<class T>
 struct TDatListItem
@@ -849,15 +1050,22 @@ struct Camera // : RCamCamera
 };
 
 struct CMauiControl : CScriptObject
-{ // 0x004C6F8A, 0x11C bytes
+{ // 0x004C6F8A, 0x120 bytes
 	using Type = ObjectType<0x10C7700, 0xF83314>;
+	uint8_t pad_maui_control[0x120 - sizeof(CScriptObject)];
 };
+VALIDATE_SIZE(CMauiControl, 0x120);
 
 struct CUIWorldView : CMauiControl
 { // 0x004C6F8A, 0x2A8 bytes
 	using Type = ObjectType<0x10C77E4, 0xF8A71C>;
 	// at 0x120
 	Camera *camera;
+	uint8_t pad_124[0x24];
+	// at 0x148
+	SCommandModeData mLeftMouseCommand;   // +0x148 (explicit order from UI/hotkey, executed via LMB)
+	// at 0x1A8
+	SCommandModeData mRightMouseCommand;  // +0x1A8 (implicit default order executed via RMB)
 	// at 0x208
 	CWldSession *session;
 	void *unk1; // If shift pressed
@@ -872,6 +1080,20 @@ struct CUIWorldView : CMauiControl
 		*(char *)((int)this + 377) = state;
 	}
 };
+VALIDATE_OFFSET(CUIWorldView, camera, 0x120);
+VALIDATE_OFFSET(CUIWorldView, mLeftMouseCommand, 0x148);
+VALIDATE_OFFSET(CUIWorldView, mRightMouseCommand, 0x1A8);
+VALIDATE_OFFSET(CUIWorldView, session, 0x208);
+
+inline bool IsImplicitRightClickCommand(const SCommandModeData *command_mode,
+                                       const CWldSession *session) noexcept {
+	if (!command_mode || !session) {
+		return false;
+	}
+	const auto *view = reinterpret_cast<const CUIWorldView *>(
+		reinterpret_cast<const char *>(command_mode) - offsetof(CUIWorldView, mRightMouseCommand));
+	return view->session == session;
+}
 
 struct LaunchInfoNew
 { // 0x005423CC, 0xA4 bytes
@@ -2616,9 +2838,32 @@ struct VisionDB
 struct SCreateEntityParams : SSTIEntityConstantData
 {};
 
+struct UserEntity_vtable
+{
+	void* (__thiscall *scalar_deleting_destructor)(UserEntity *self, unsigned int flags);
+	void  (__thiscall *Tick)(UserEntity *self, int32_t seqNo);
+	const UserUnit* (__thiscall *IsUserUnitConst)(const UserEntity *self);
+	UserUnit* (__thiscall *IsUserUnit)(UserEntity *self);
+	float (__thiscall *GetUniformScale)(const UserEntity *self);
+	const void* (__thiscall *GetCommandQueueConst)(const UserEntity *self);
+	void* (__thiscall *GetCommandQueue)(UserEntity *self);
+	const void* (__thiscall *GetFactoryCommandQueueConst)(const UserEntity *self);
+	void* (__thiscall *GetFactoryCommandQueue)(UserEntity *self);
+	void  (__thiscall *UpdateEntityData)(UserEntity *self, const void *varDat);
+	void  (__thiscall *UpdateVisibility)(UserEntity *self);
+	bool  (__thiscall *RequiresUIRefresh)(const UserEntity *self);
+	bool  (__thiscall *IsSelectable)(const UserEntity *self);
+	bool  (__thiscall *IsBeingBuilt)(const UserEntity *self);
+	void  (__thiscall *NotifyFocusArmyUnitDamaged)(UserEntity *self);
+	void  (__thiscall *CreateMeshInstance)(UserEntity *self, bool flag);
+};
+
 struct UserEntity
 {
-	void *vtable;
+	union {
+		void *vtable;
+		const UserEntity_vtable *vtbl;
+	};
 	uint32_t unk1[2];
 	CWldSession *mSession;
 	DBEntry mEntry;
@@ -2637,6 +2882,34 @@ struct UserEntity
 	float mLastInterpAmt;
 	bool unk3;
 	bool unk4;
+
+	[[nodiscard]] inline UserUnit *IsUserUnit() noexcept {
+		return (vtbl && vtbl->IsUserUnit) ? vtbl->IsUserUnit(this) : nullptr;
+	}
+	[[nodiscard]] inline const UserUnit *IsUserUnit() const noexcept {
+		return (vtbl && vtbl->IsUserUnitConst) ? vtbl->IsUserUnitConst(this) : nullptr;
+	}
+	[[nodiscard]] inline float GetUniformScale() const noexcept {
+		return (vtbl && vtbl->GetUniformScale) ? vtbl->GetUniformScale(this) : 1.0f;
+	}
+	[[nodiscard]] inline void *GetCommandQueue() noexcept {
+		return (vtbl && vtbl->GetCommandQueue) ? vtbl->GetCommandQueue(this) : nullptr;
+	}
+	[[nodiscard]] inline const void *GetCommandQueue() const noexcept {
+		return (vtbl && vtbl->GetCommandQueueConst) ? vtbl->GetCommandQueueConst(this) : nullptr;
+	}
+	[[nodiscard]] inline void *GetFactoryCommandQueue() noexcept {
+		return (vtbl && vtbl->GetFactoryCommandQueue) ? vtbl->GetFactoryCommandQueue(this) : nullptr;
+	}
+	[[nodiscard]] inline const void *GetFactoryCommandQueue() const noexcept {
+		return (vtbl && vtbl->GetFactoryCommandQueueConst) ? vtbl->GetFactoryCommandQueueConst(this) : nullptr;
+	}
+	[[nodiscard]] inline bool IsSelectable() const noexcept {
+		return (vtbl && vtbl->IsSelectable) ? vtbl->IsSelectable(this) : false;
+	}
+	[[nodiscard]] inline bool IsBeingBuilt() const noexcept {
+		return (vtbl && vtbl->IsBeingBuilt) ? vtbl->IsBeingBuilt(this) : false;
+	}
 };
 VALIDATE_OFFSET(UserEntity, mVarDat, 0x50);
 VALIDATE_OFFSET(UserEntity, mArmy, 0x120);
@@ -2906,95 +3179,183 @@ struct Sim // : ICommandSink
 VALIDATE_OFFSET(Sim, mRandom, 0x904);
 VALIDATE_SIZE(Sim, 0xAF8);
 
+struct CFormation;
+struct CommandManager;
+struct SSessionSaveData;
+
+struct SExtraUnitDataPair {
+	int32_t key;
+	int32_t value;
+};
+VALIDATE_SIZE(SExtraUnitDataPair, 0x08);
+
+struct SExtraUnitData {
+	uint8_t pairs[0x18]; // FastVectorN<SExtraUnitDataPair, 1>
+	int32_t unitEntityId;
+	int32_t syncAuxWord1C;
+};
+VALIDATE_SIZE(SExtraUnitData, 0x20);
+
 struct CWldSession
 { // 0x0089318A, 0x508 bytes
-	CWldSession *self1;
-	CWldSession *self2;
-	void *self_weird1; // this + 0x8
-	void *self_weird2; // this + 0x8
-	// at 0x10
-	LuaState *LState; // Set from constructor argument
-	void *unk1;		  // 0x14 bytes
-	RRuleGameRules *rules;
-	CWldMap *map_;
-	LaunchInfoNew *launchInfo;
-	void *unk2; // class detail::boost::sp_counted_impl_p<struct Moho::LaunchInfoNew>
-	string mapName;
-	Entities entities;
-	uint8_t pad1[0x3A8];
-	// at 0x3F0
-	list<UserArmy *> armies;
-	// at 0x3FC
-	void *unk3; // 0xCC0 bytes
-	void *unk4; // 0x64 bytes
-	uint8_t pad2[0x20];
-	// at 0x424
-	CSimResources *deposits;
-	uint8_t pad3[0x48];
-	// at 0x470
-	vector<SSTICommandSource> cmdSources;
-	// at 0x480
-	int ourCmdSource;
-	bool isReplay;
-	bool isBeingRecorded;
-	bool isMultiplayer;
-	bool allowObservers;
+	IntrusiveLink<CWldSession*> head0; // 0x0000
+	IntrusiveLink<CWldSession*> head1; // 0x0008
 
-	int focusArmyIndex; // focused army, -1 = observer
+	LuaState *mState;                                     // 0x0010
+	void *mCurThread;                                     // 0x0014
+	RRuleGameRules *mRules;                               // 0x0018
+	CWldMap *mWldMap;                                     // 0x001C
+	shared_ptr<LaunchInfoNew> mLaunchInfo;                // 0x0020
+	string mMapName;                                      // 0x0028
+	void *mUnknownOwner44;                                // 0x0044
+	void *mSaveSourceTreeHead;                            // 0x0048
+	uint32_t mSaveSourceTreeSize;                         // 0x004C
+	uint8_t mEntitySpatialDbStorage[0xA0];                // 0x0050
+	uint8_t mBuildTemplates[0x2D0];                       // 0x00F0
+	float mBuildTemplateArg1;                             // 0x03C0
+	float mBuildTemplateArg2;                             // 0x03C4
+	uint8_t mVisionDb[0x24];                              // 0x03C8
+	vector<UserArmy*> userArmies;                         // 0x03EC
+	CommandManager *mCommandManager;                      // 0x03FC
+	CFormation *mCurFormation;                            // 0x0400
+	void *mUICommandGraphPx;                              // 0x0404
+	void *mUICommandGraphControl;                         // 0x0408
+	shared_ptr<unk_t> mUnknownShared40C;                  // 0x040C
+	shared_ptr<CDebugCanvas> mDebugCanvas;                // 0x0414
+	shared_ptr<CDebugCanvas> mBeatDebugCanvas;            // 0x041C
+	shared_ptr<CSimResources> mSimResources;              // 0x0424
+	void *mAuxUpdateRoot;                                 // 0x042C
+	void *mAuxUpdateHead;                                 // 0x0430
+	uint32_t mAuxUpdateSize;                              // 0x0434
+	void *mVizUpdateRoot;                                 // 0x0438
+	void *mVizUpdateHead;                                 // 0x043C
+	uint32_t mVizUpdateSize;                              // 0x0440
+	LuaObject mScenarioInfo;                              // 0x0444
+	int32_t mGameTick;                                    // 0x0458
+	int32_t mLastBeatWasTick;                             // 0x045C
+	float mTimeSinceLastTick;                             // 0x0460
+	uint8_t mSessionPauseStateA;                          // 0x0464
+	uint8_t mRequestingPauseState;                        // 0x0465
+	uint8_t mRequestingPause;                             // 0x0466
+	uint8_t pad_0467[1];                                  // 0x0467
+	int32_t mPauseRequester;                              // 0x0468
+	uint8_t mReplayIsPaused;                              // 0x046C
+	char pad_046D[3];                                     // 0x046D
+	vector<SSTICommandSource> cmdSources;                 // 0x0470
+	int32_t ourCmdSource;                                 // 0x0480
+	bool IsReplay;                                        // 0x0484
+	bool IsBeingRecorded;                                 // 0x0485
+	bool IsMultiplayer;                                   // 0x0486
+	bool IsObservingAllowed;                              // 0x0487
+	int32_t FocusArmy;                                    // 0x0488
+	uint8_t IsGameOver;                                   // 0x048C
+	char pad_048D[3];                                     // 0x048D
+	vector<SExtraUnitData> mSyncExtraUnitData;            // 0x0490
+	SSelectionSetUserEntity mSelection;                   // 0x04A0
+	uint8_t mCursorWorldState[4];                         // 0x04B0
+	Vector3f CursorWorldPos;                              // 0x04B4
+	char pad_04C0[8];                                     // 0x04C0
+	int32_t HighlightCommandId;                           // 0x04C8
+	Vector2f CursorScreenPos;                             // 0x04CC
+	bool IsCheatsEnabled;                                 // 0x04D4
+	bool mShowInvalidBuildPlacementPreview;               // 0x04D5
+	char pad_04D6[2];                                     // 0x04D6
+	vector<string> mOverlayFilters;                       // 0x04D8
+	bool DisplayEconomyOverlay;                           // 0x04E8
+	bool mTeamColorMode;                                  // 0x04E9
+	char pad_04EA[2];                                     // 0x04EA
+	uint8_t mEdgeFog[0x10];                               // 0x04EC
+	shared_ptr<SSessionSaveData> mPendingSaveData;        // 0x04FC
+	char pad_0504[4];                                     // 0x0504
 
-	BOOL isGameOver;
-	uint8_t pad4[0x10];
-	// at 0x4A0
-	map<UserUnit*, WeakPtr<UserEntity>> selectedUnits;
-	size_t mMaxSelectionSize;
-	// at 0x4B0
-	struct
-	{ // size 0x24
-		void *unk1;
-		float mouseWorldPosX;
-		float mouseWorldPosY;
-		float mouseWorldPosZ;
-		void *unk2;
-		void *unk3;
-		int highlightCommandId;
-		float mouseScreenPosX;
-		float mouseScreenPosY;
-	} mouse;
-	// at 0x4D4
-	bool cheatsEnabled; // Copied from LaunchInfoNew + 0x88
-	uint8_t pad5[0x13];
-	// at 0x4E8
-	bool displayEconomyOverlay;
-	bool relationsArmyColors;
-	uint8_t pad6[0x1C];
+	~CWldSession() {}
 };
 VALIDATE_SIZE(CWldSession, 0x508);
+VALIDATE_OFFSET(CWldSession, head0, 0x000);
+VALIDATE_OFFSET(CWldSession, head1, 0x008);
+VALIDATE_OFFSET(CWldSession, mState, 0x010);
+VALIDATE_OFFSET(CWldSession, mWldMap, 0x01C);
+VALIDATE_OFFSET(CWldSession, mLaunchInfo, 0x020);
+VALIDATE_OFFSET(CWldSession, mMapName, 0x028);
+VALIDATE_OFFSET(CWldSession, userArmies, 0x3EC);
+VALIDATE_OFFSET(CWldSession, mCommandManager, 0x3FC);
+VALIDATE_OFFSET(CWldSession, mCurFormation, 0x400);
+VALIDATE_OFFSET(CWldSession, mSimResources, 0x424);
+VALIDATE_OFFSET(CWldSession, mScenarioInfo, 0x444);
+VALIDATE_OFFSET(CWldSession, mGameTick, 0x458);
+VALIDATE_OFFSET(CWldSession, cmdSources, 0x470);
+VALIDATE_OFFSET(CWldSession, ourCmdSource, 0x480);
+VALIDATE_OFFSET(CWldSession, FocusArmy, 0x488);
+VALIDATE_OFFSET(CWldSession, mSyncExtraUnitData, 0x490);
+VALIDATE_OFFSET(CWldSession, mSelection, 0x4A0);
+VALIDATE_OFFSET(CWldSession, CursorWorldPos, 0x4B4);
+VALIDATE_OFFSET(CWldSession, HighlightCommandId, 0x4C8);
+VALIDATE_OFFSET(CWldSession, CursorScreenPos, 0x4CC);
+VALIDATE_OFFSET(CWldSession, IsCheatsEnabled, 0x4D4);
+VALIDATE_OFFSET(CWldSession, mOverlayFilters, 0x4D8);
+VALIDATE_OFFSET(CWldSession, DisplayEconomyOverlay, 0x4E8);
+VALIDATE_OFFSET(CWldSession, mEdgeFog, 0x4EC);
+VALIDATE_OFFSET(CWldSession, mPendingSaveData, 0x4FC);
 
 struct CSimDriver // : ISTIDriver
-{				  // 0x0073B59E, 0x230 bytes
+{ // 0x0073B59E, 0x230 bytes
 	void *vtable;
-	Sim *sim;
-	IClientManager *ClientManager;
-	uint8_t pad1[4];
-	// at 0x10
-	void *LaunchInfoNew; // From g_SWldSessionInfo, only when loading game init
-	uint8_t pad2[8];
-	// at 0x1C
-	uint32_t beatCounter1;
-	uint32_t beatCounter2; // Copied to address 0x1290710
-	uint32_t beatCounter3;
-	uint8_t pad3[0x86];
-	// at 0xB0
-	int focusArmyIndex;
-	uint8_t pad4[0x6C];
-	// at 0x120
-	int focusArmyIndex2; // Copy from 0xB0
-	uint8_t _pad5[0x104];
-	// at 0x228
-	int maxSimRate; // from CalcMaxSimRate
-	uint8_t pad6[4];
+	Sim *mSim;
+	IClientManager *mClientManager;
+	void *mStream;
+	shared_ptr<LaunchInfoNew> mLaunchInfo;
+	uint32_t mCommandSourceId;
+	int32_t mLastDequeuedBeat;
+	int32_t mDispatchBeat;
+	int32_t mNextIssueBeat;
+	void *mMarshaller;
+	void *mDecoder;
+	uint8_t mLock[0x8];
+	void *mSimThread;
+	int32_t mOutstandingRequests;
+	uint8_t mTimer[0x8];
+	HANDLE mConnectionEvent;
+	uint8_t pad_4C[0x4];
+	int64_t mLastSyncCycleTime;
+	bool mStopSimThread;
+	uint8_t pad_59[0x7];
+	int64_t mFirstCommandCycleTime;
+	bool mSimBusy;
+	uint8_t pad_69[0x3];
+	void *mCreateSimThread;
+	bool mStopCreateSimThread;
+	uint8_t pad_71[0x3];
+	uint8_t mStateChanged[0x18];
+	int32_t mState;
+	uint8_t mSyncDataQueue[0x14];
+	HANDLE mSyncDataAvailableEvent;
+	bool mInterlockedMode;
+	uint8_t pad_A9[0x3];
+	int32_t mInterlockRefCount;
+	SSyncFilter mPendingSyncFilter; // 0xB0
+	SSyncFilter mActiveSyncFilter;  // 0x120
+	void *mSaveGameRequest;         // 0x190
+	bool mWantsToSave;              // 0x194
+	uint8_t pad_195[0x3];
+	bool mSaveRequestUsesSuggestedName; // 0x198
+	uint8_t pad_199[0x3];
+	string mPendingSaveName;        // 0x19C
+	uint8_t mSimSpeedSamples[0x70]; // 0x1B8
+	int32_t mCurrentSimRate;        // 0x228
+	uint8_t pad_22C[0x4];
 };
 VALIDATE_SIZE(CSimDriver, 0x230);
+VALIDATE_OFFSET(CSimDriver, mClientManager, 0x008);
+VALIDATE_OFFSET(CSimDriver, mLaunchInfo, 0x010);
+VALIDATE_OFFSET(CSimDriver, mLastSyncCycleTime, 0x050);
+VALIDATE_OFFSET(CSimDriver, mFirstCommandCycleTime, 0x060);
+VALIDATE_OFFSET(CSimDriver, mState, 0x08C);
+VALIDATE_OFFSET(CSimDriver, mSyncDataAvailableEvent, 0x0A4);
+VALIDATE_OFFSET(CSimDriver, mPendingSyncFilter, 0x0B0);
+VALIDATE_OFFSET(CSimDriver, mActiveSyncFilter, 0x120);
+VALIDATE_OFFSET(CSimDriver, mSaveGameRequest, 0x190);
+VALIDATE_OFFSET(CSimDriver, mPendingSaveName, 0x19C);
+VALIDATE_OFFSET(CSimDriver, mCurrentSimRate, 0x228);
 
 struct iGrid_data4
 {
@@ -3426,17 +3787,61 @@ struct WRenViewport // : WD3DViewport
 	Silhouette silhouette;
 };
 
-namespace incomplete
+struct struct_CommandIssueDataHelper
 {
-	struct Command
-	{
-		Command *self;
-		uint8_t pad1[0x1C];
-		RBlueprint *bpBuild; // at 0x20
-		uint8_t pad2[0x34];
-		int commandType; // at 0x58 // see EUnitCommandType; sub_552170
-		uint8_t pad3[0x4];
-		int targetId; // at 0x60 // valid if != 0xF0000000
-		Vector3f pos; // at 0x64
-	};
-}
+	CmdId mCmdId;        // +0x00
+	int32_t unk38;       // +0x04
+	Quaternionf mOri;    // +0x08
+	float unk4C;         // +0x18
+	RBlueprint *bpBuild; // +0x1C
+	string mStr;         // +0x20
+};
+VALIDATE_SIZE(struct_CommandIssueDataHelper, 60);
+VALIDATE_OFFSET(struct_CommandIssueDataHelper, bpBuild, 0x1C);
+VALIDATE_OFFSET(struct_CommandIssueDataHelper, mOri, 0x08);
+
+struct SSTICommandVariableData
+{
+	uint8_t mEntIds[20];
+	int v2;
+	EUnitCommandType mCmdType;
+	SSTITarget mTarget1;
+	SSTITarget mTarget2;
+	int v14;
+	uint8_t mCells[24];
+	int v21;
+	int mCount;
+	uint32_t v23;
+};
+VALIDATE_SIZE(SSTICommandVariableData, 108);
+VALIDATE_OFFSET(SSTICommandVariableData, mCmdType, 0x18);
+VALIDATE_OFFSET(SSTICommandVariableData, mTarget1, 0x1C);
+
+struct CommandIssueHelper
+{
+	int val0;
+	struct_CommandIssueDataHelper mDat;
+	SSTICommandVariableData mVarDat;
+	uint8_t gapAC[4];
+	uint8_t val1a;
+	uint8_t val1b;
+	uint8_t mVarDatUpdated;
+	uint8_t gapB3;
+	int val2;
+	uint8_t gapB8[4];
+	int val3;
+	int val4;
+	int val5;
+	int val6;
+	uint8_t mMap[12];
+
+	[[nodiscard]] RBlueprint *GetBlueprint() const noexcept { return mDat.bpBuild; }
+	[[nodiscard]] EUnitCommandType GetCommandType() const noexcept { return mVarDat.mCmdType; }
+	[[nodiscard]] EntId GetTargetId() const noexcept { return mVarDat.mTarget1.mEnt; }
+	[[nodiscard]] const Vector3f &GetPosition() const noexcept { return mVarDat.mTarget1.mPos; }
+};
+VALIDATE_SIZE(CommandIssueHelper, 216);
+VALIDATE_OFFSET(CommandIssueHelper, mDat, 0x04);
+VALIDATE_OFFSET(CommandIssueHelper, mVarDat, 0x40);
+VALIDATE_OFFSET(CommandIssueHelper, val2, 0xB4);
+

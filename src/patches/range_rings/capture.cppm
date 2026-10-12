@@ -32,8 +32,9 @@ inline std::array<float, 4> capture_color_{0.0f, 1.0f, 1.0f, 0.5f};
 GetUnitFootprintMaxSize(const fa::RUnitBlueprint *blueprint) noexcept {
   if (!blueprint)
     return 0.0f;
-  const auto *fp = blueprint->mPhysics.mFootprint ? blueprint->mPhysics.mFootprint
-                                                  : &blueprint->mFootprint;
+  const auto *fp = blueprint->mPhysics.mFootprint
+                       ? blueprint->mPhysics.mFootprint
+                       : &blueprint->mFootprint;
   return static_cast<float>(std::max(fp->mSizeX, fp->mSizeZ));
 }
 
@@ -55,11 +56,10 @@ HasCaptureCapability(const fa::RUnitBlueprint *blueprint) noexcept {
 CalculateCaptureRange(const fa::RUnitBlueprint *blueprint,
                       bool is_capturing = false) noexcept {
   const float fp_max = GetUnitFootprintMaxSize(blueprint);
-  const float base_range =
-      (capture_mode_ == CaptureRangeMode::kMaxRange || IsImmobile(blueprint) ||
-       is_capturing)
-          ? 10.0f
-          : 5.0f;
+  const float base_range = (capture_mode_ == CaptureRangeMode::kMaxRange ||
+                            IsImmobile(blueprint) || is_capturing)
+                               ? 10.0f
+                               : 5.0f;
   return base_range + fp_max;
 }
 
@@ -104,7 +104,7 @@ void ApplyCapture() {
   core::events::OnMemoryMapFile +=
       [](fa::ConstMemBuffer *buffer, const char *fname) {
         if (std::string_view(fname).ends_with(
-            "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
+                "\\lua\\ui\\game\\rangeoverlayparams.lua")) {
           const auto hex = ToFaColorHex(capture_color_);
           buffer->append(std::format(R"(
         if RangeOverlayParams.Capture == nil then

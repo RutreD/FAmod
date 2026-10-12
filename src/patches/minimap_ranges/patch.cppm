@@ -19,12 +19,15 @@ public:
 
   [[nodiscard]] std::string_view Description() const noexcept override {
     return tr(
-        "Allows disabling range rings on the minimap. Minor FPS improvement.",
+        "Allows disabling range rings on the minimap. Minor FPS improvement.\n"
+        "Console command: ren_MinimapRanges",
         {{Language::Russian,
           "Позволяет отключить отрисовку колец радиуса на миникарте. Даёт "
-          "незначительный прирост FPS."},
+          "незначительный прирост FPS.\n"
+          "Консольная команда: ren_MinimapRanges"},
          {Language::Chinese,
-          "允许关闭小地图上的范围圈渲染。对帧率有微小提升。"}});
+          "允许关闭小地图上的范围圈渲染。对帧率有微小提升。\n"
+          "控制台指令：ren_MinimapRanges"}});
   }
 
   void Apply() override;

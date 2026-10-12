@@ -211,7 +211,8 @@ void RenderRangeRingsUi() {
     ImGui::SetItemTooltip(
         "%s",
         tr("Shows the maximum hold/leash range (10 + unit footprint) before "
-           "capturing aborts, or capture range when using Navigator:AbortMove().",
+           "capturing aborts, or capture range when using "
+           "Navigator:AbortMove().",
            {{Language::Russian,
              "Показывает максимальную дистанцию удержания луча (10 + размер "
              "базы), при превышении которой захват срывается, либо радиус при "

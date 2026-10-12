@@ -115,7 +115,7 @@ using Vector4f = Vector4<float>;
 template<class R>
 struct Quaternion
 {
-    R x, y, z, w;
+    R w, x, y, z;
 };
 using Quaternionf = Quaternion<float>;
 

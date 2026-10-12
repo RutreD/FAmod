@@ -18,6 +18,8 @@ import patch.share_factory_assist;
 import patch.post_process;
 import patch.replay_desync;
 import patch.reclaim_zoom;
+import patch.assist_construction;
+import fa;
 
 export namespace core::app {
 
@@ -26,6 +28,7 @@ void Initialize() {
   ImGuiHook::OnFrame += [] { ImGui::ShowDemoWindow(); };
 #endif
 
+  fa::EngineRuntime::Initialize();
   core::events::Initialize();
 
   auto &registry = PatchRegistry::Instance();
@@ -38,6 +41,7 @@ void Initialize() {
   registry.RegisterPatch<PostProcessPatch>();
   registry.RegisterPatch<ReplayDesyncPatch>();
   registry.RegisterPatch<ReclaimZoomPatch>();
+  registry.RegisterPatch<AssistConstructionOrdersPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();

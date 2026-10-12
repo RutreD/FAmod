@@ -19,7 +19,8 @@ std::uint32_t __fastcall PickColorForConnections(const fa::string *s, void *,
                                                  int row, int index) {
   if (row > 0 && (index == 4 || index >= 7)) {
     int v = std::atoi(s->data());
-    return kNetworkColors[std::clamp(v, 0, static_cast<int>(kNetworkColors.size() - 1))];
+    return kNetworkColors[std::clamp(
+        v, 0, static_cast<int>(kNetworkColors.size() - 1))];
   }
   return 0xFFFFFFFFu;
 }

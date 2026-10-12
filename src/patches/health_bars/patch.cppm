@@ -19,12 +19,14 @@ public:
   [[nodiscard]] std::string_view Description() const noexcept override {
     return tr(
         "Allows hiding health bars for undamaged units (100% HP). Minor FPS "
-        "improvement.",
+        "improvement.\nConsole command: ren_FullHealth",
         {{Language::Russian, "Позволяет скрыть полосы здоровья для "
                              "неповреждённых юнитов (100% HP). "
-                             "Даёт незначительный прирост FPS."},
+                             "Даёт незначительный прирост FPS.\n"
+                             "Консольная команда: ren_FullHealth"},
          {Language::Chinese,
-          "允许隐藏满血单位（100%生命值）的生命条。对帧率有微小提升。"}});
+          "允许隐藏满血单位（100%生命值）的生命条。对帧率有微小提升。\n"
+          "控制台指令：ren_FullHealth"}});
   }
 
   void Apply() override;

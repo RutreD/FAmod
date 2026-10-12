@@ -23,8 +23,8 @@ inline IntelRangeBehavior allied_behavior_{
 
 UserUnit *__fastcall RenderRangeFilter(UserUnit *self, uintptr_t esp) {
   auto session = g_CWldSession;
-  if (self->mArmy->mConstDat.mIndex == session->focusArmyIndex) {
-    return session->selectedUnits.contains(self) ? nullptr : self;
+  if (self->mArmy->mConstDat.mIndex == session->FocusArmy) {
+    return session->mSelection.Contains(self) ? nullptr : self;
   }
 
   const auto &range_name_str = **reinterpret_cast<string **>(esp + 0x30);
@@ -48,7 +48,7 @@ void __fastcall SyncVisionRange(ReconBlip *recon_blip, Unit *unit) {
   recon_attr.SetIntelRadius(ENTATTR_Vision,
                             unit_attr.GetIntelRadius(ENTATTR_Vision));
 
-  if (unit->mArmy && unit->mArmy->IsAlly(g_CWldSession->focusArmyIndex)) {
+  if (unit->mArmy && unit->mArmy->IsAlly(g_CWldSession->FocusArmy)) {
     recon_attr.SetIntelRadius(ENTATTR_Radar,
                               unit_attr.GetIntelRadius(ENTATTR_Radar));
     recon_attr.SetIntelRadius(ENTATTR_Sonar,
@@ -62,7 +62,7 @@ bool __cdecl ShouldAddUnit(UserArmy *focus_army, UserUnit *user_unit) {
   if (user_unit->mArmy == focus_army)
     return true;
 
-  if (!user_unit->mArmy->IsAlly(g_CWldSession->focusArmyIndex))
+  if (!user_unit->mArmy->IsAlly(g_CWldSession->FocusArmy))
     return false;
 
   auto blueprint = static_cast<RUnitBlueprint *>(user_unit->mParams.mBlueprint);

@@ -18,6 +18,11 @@
 
 ## 🚀 Player Quick Start Guide
 
+### 📹 Video Guide & Overview
+
+* **[Watch on YouTube: Installation & Feature Overview](https://www.youtube.com/watch?v=c84a4bN5qo8)**  
+  *(Original in Russian; YouTube's auto-dubbing audio track and auto-translated subtitles are available).*
+
 ### Installation
 
 1. Download the latest **`dsound.dll`** from the [Releases](https://github.com/RutreD/FAmod/releases) page.
@@ -77,6 +82,7 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ### 4. ❤️ Health Bars Visibility
 * **What it does**: Allows hiding health bars for full-health units (100% HP), keeping the battlefield visually clean and reducing draw overhead.
+* **Console variable**: `ren_FullHealth` (`true` / `false`)
 * **Preview**:
   ![Health Bars](docs/screenshots/health_bars.png)
 
@@ -84,19 +90,32 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ### 5. 🗺️ Minimap Range Rings
 * **What it does**: Allows toggling range rings on the minimap, keeping tactical radar views clean and uncluttered.
+* **Console variable**: `ren_MinimapRanges` (`true` / `false`)
 * **Preview**:
   ![Minimap Range Rings](docs/screenshots/minimap_ranges.png)
 
 ---
 
 ### 6. 🏭 Factory Assist Orders
-* **What it does**: Allows factories to issue assist orders for produced units (including target assistance or ground rally points). When assisting another factory, standard build queue sharing is preserved.
+* **What it does**: Allows factories to issue assist orders for produced units (including target assistance or ground rally points). Assisting another factory as the first command copies its build queue (can be disabled via a sub-setting to always issue unit-assist rally), while queuing with Shift sets produced units to assist it.
+* **Console variables**: `ui_ShareFactoryAssist`, `ui_ShareFactoryAssistDisableQueueCopy` (`true` / `false`)
 * **Preview**:
   ![Factory Assist Orders](docs/screenshots/factory_assist.png)
 
 ---
 
-### 7. 🎨 World Post-Processing
+### 7. 🏗️ Assist Construction Orders
+* **What it does**: Allows engineers and ACUs to assist queued or unbuilt building blueprints (the semi-transparent ghosts/holograms in the build queue) by right-clicking on them directly, or by issuing explicit Repair orders on the blueprint.
+* **Why it matters**:
+  - **In Vanilla FA**: Right-clicking on a blueprint ghost treats it as open ground and issues a Move command; explicit Repair commands on blueprint ghosts are simply ignored.
+  - **With this patch**: Selecting engineers and right-clicking (or using the `Repair` command) directly on any planned building hologram immediately orders them to assist that construction.
+* **Console variable**: `ui_AssistConstructionOrders` (`true` / `false`)
+* **Preview**:
+  <video src="docs/screenshots/assist_construction_orders.webm" width="100%" controls autoplay muted loop></video>
+
+---
+
+### 8. 🎨 World Post-Processing
 * **What it does**: Adds a full ReShade-grade post-processing pipeline applied **only to the 3D world** (terrain, units, water, explosions), leaving strategic icons, health bars, and the entire game UI completely untouched. All effects run in a single fullscreen pass with a custom HLSL pixel shader compiled at runtime.
 * **Shader effects**:
   - **FXAA 3.11** — Edge-directed world-only anti-aliasing
@@ -120,12 +139,12 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ---
 
-### 8. 📼 Replay Desync Fix
+### 9. 📼 Replay Desync Fix
 * **What it does**: Fixes a long-standing engine defect where replays desync on the tick after any player leaves or disconnects. In vanilla Forged Alliance, `CMDST_CommandSourceTerminated` clears the internal `hasCommandSource` flag in `CClientBase`, but the handler for `CMDST_SetCommandSource` never restores it. Because all player inputs during replay playback are funneled through a single `CReplayClient`, subsequent command packets in that beat are discarded, causing replays to permanently diverge. This patch restores the flag upon setting a command source and prevents the desynchronization.
 
 ---
 
-### 9. 🔍 Reclaim Prop Selection Zoom
+### 10. 🔍 Reclaim Prop Selection Zoom
 * **What it does**: Allows customizing the camera zoom distance threshold (default `150`, adjustable up to `999`) for selecting and issuing reclaim orders on props (trees, rocks, wreckage). Can affect framerate.
 
 ---

@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef FA_MODULE_IMPORT
+#error "Do not include magic_classes.h directly. Use 'import fa;' instead."
+#endif
 #include <type_traits>
 #include "moho.h"
 
