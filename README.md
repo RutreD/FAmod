@@ -111,7 +111,7 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
   - **With this patch**: Selecting engineers and right-clicking (or using the `Repair` command) directly on any planned building hologram immediately orders them to assist that construction.
 * **Console variable**: `ui_AssistConstructionOrders` (`true` / `false`)
 * **Preview**:
-  <video src="docs/screenshots/assist_construction_orders.webm" width="100%" controls autoplay muted loop></video>
+  ![Assist Construction Orders](docs/screenshots/assist_construction_orders.webp)
 
 ---
 
