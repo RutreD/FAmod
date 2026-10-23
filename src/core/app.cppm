@@ -19,6 +19,7 @@ import patch.post_process;
 import patch.replay_desync;
 import patch.reclaim_zoom;
 import patch.assist_construction;
+import patch.bomber_fire_clock;
 import fa;
 
 export namespace core::app {
@@ -42,6 +43,7 @@ void Initialize() {
   registry.RegisterPatch<ReplayDesyncPatch>();
   registry.RegisterPatch<ReclaimZoomPatch>();
   registry.RegisterPatch<AssistConstructionOrdersPatch>();
+  registry.RegisterPatch<BomberFireClockPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();
