@@ -68,11 +68,11 @@ private:
     load(dll_get_class_object, "DllGetClassObject");
   }
 
-  ~OriginalFunctions() {
-    if (original_dll) {
-      FreeLibrary(original_dll);
-    }
-  }
+  // Not calling FreeLibrary here: this destructor runs under Loader Lock
+  // during CRT finalization, and FreeLibrary would deadlock trying to
+  // acquire the same lock for the real dsound.dll's DllMain.
+  // The OS unmaps all modules on process exit anyway.
+  ~OriginalFunctions() = default;
 
   OriginalFunctions(const OriginalFunctions &) = delete;
   OriginalFunctions &operator=(const OriginalFunctions &) = delete;

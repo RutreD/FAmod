@@ -29,6 +29,7 @@ enum class Method { Present, EndScene };
 inline IDirect3DDevice9 *Device = nullptr;
 void Install(Method method = Method::Present,
              std::uintptr_t *vtable_ = nullptr);
+void Uninstall();
 } // namespace D3D9
 
 namespace Input {
@@ -218,6 +219,30 @@ void Install(Method method, std::uintptr_t *vtable_) {
   }
   originalReset = reinterpret_cast<ResetFn>(vtable[kVTableIndexReset]);
   vtable[kVTableIndexReset] = reinterpret_cast<std::uintptr_t>(&ResetHooked);
+}
+
+void Uninstall() {
+  // Restore original vtable entries
+  std::uintptr_t *vtable = GetVirtualTable();
+  ScopedMemoryProtect protect(vtable, sizeof(std::uintptr_t) * kVTableCount,
+                              PAGE_READWRITE);
+  if (originalPresent)
+    vtable[kVTableIndexPresent] =
+        reinterpret_cast<std::uintptr_t>(originalPresent);
+  if (originalEndScene)
+    vtable[kVTableIndexEndScene] =
+        reinterpret_cast<std::uintptr_t>(originalEndScene);
+  if (originalReset)
+    vtable[kVTableIndexReset] =
+        reinterpret_cast<std::uintptr_t>(originalReset);
+
+  // Shutdown ImGui backends and destroy the context
+  if (Device) {
+    ImGui_ImplDX9_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+    Device = nullptr;
+  }
 }
 
 } // namespace ImGuiHook::D3D9

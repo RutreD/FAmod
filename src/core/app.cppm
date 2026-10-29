@@ -54,6 +54,11 @@ void Initialize() {
                         rcmp::stdcall_t<LRESULT(HWND, UINT, WPARAM, LPARAM)>>(
         [](auto original, HWND hWnd, UINT uMsg, WPARAM wParam,
            LPARAM lParam) -> LRESULT {
+          if (uMsg == WM_DESTROY) {
+            ImGuiHook::D3D9::Uninstall();
+            return original(hWnd, uMsg, wParam, lParam);
+          }
+
           auto signal_results =
               ImGuiHook::OnWndProc.emit_iterate(hWnd, uMsg, wParam, lParam);
           if (std::ranges::contains(signal_results, true))
