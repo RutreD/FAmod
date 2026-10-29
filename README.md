@@ -149,6 +149,11 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 
 ---
 
+### 11. 🔊 XACT Sound Clock Fix
+* **What it does**: Fixes every sound playing only once per game launch when Windows has been running for 24.9 to 49.7 days (repeating every 49.7 days). The game's audio engine, `xactengine2_9.dll`, keeps its millisecond clock in 32 bits and compares it as a signed number, so a newly created engine never runs its cue update loop while the clock reads as negative. Cues never finish, and their instance limits block every replay. The patch rebases XACT's `QueryPerformanceCounter` to the moment it is applied, so the clock starts near zero every launch.
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 <details>

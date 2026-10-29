@@ -19,6 +19,7 @@ import patch.post_process;
 import patch.replay_desync;
 import patch.reclaim_zoom;
 import patch.assist_construction;
+import patch.xact_clock;
 import fa;
 
 export namespace core::app {
@@ -42,6 +43,7 @@ void Initialize() {
   registry.RegisterPatch<ReplayDesyncPatch>();
   registry.RegisterPatch<ReclaimZoomPatch>();
   registry.RegisterPatch<AssistConstructionOrdersPatch>();
+  registry.RegisterPatch<XactClockPatch>();
 
   registry.LoadAll(GetSettings());
   registry.ApplyAll();
