@@ -157,6 +157,13 @@ To remove FAmod, simply delete `dsound.dll` and `famod_settings.json` from your 
 ## ❓ Frequently Asked Questions (FAQ)
 
 <details>
+<summary><b>Can I get banned for using this mod? / Могут ли забанить за этот мод?</b></summary>
+No. The current version of FAmod is permitted for use, confirmed by FAF moderator <b>Deribus</b>: <a href="https://discord.com/channels/197033481883222026/1565054134044991609">Discord confirmation message</a>.
+
+*(Текущая версия разрешена к использованию, подтверждено модератором Deribus: <a href="https://discord.com/channels/197033481883222026/1565054134044991609">ссылка на сообщение в Discord</a>).*
+</details>
+
+<details>
 <summary><b>Does FAmod cause desyncs in multiplayer games?</b></summary>
 No, currently FAmod does not cause desyncs. All included features (tactical range rings, UI overlays, camera zoom thresholds for prop selection, world post-processing shaders, and performance optimizations) operate strictly on the client/UI level without altering the shared deterministic Sim simulation.
 </details>
